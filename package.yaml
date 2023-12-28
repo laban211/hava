@@ -1,14 +1,13 @@
 name: hava
 version: 0.1.0.0
 github: "laban211/hava"
-license: BSD3
-author: "Author name here"
-maintainer: "example@example.com"
-copyright: "2021 Author Daniel Tabacskó"
+license: MIT
+author: "Daniel Tabacskó"
+maintainer: "lalaban211@gmail.com"
+copyright: "2023 Author Daniel Tabacskó"
 
 extra-source-files:
   - README.md
-  - ChangeLog.md
 
 # Metadata used when publishing your package
 # synopsis:            Short description of your package
@@ -17,7 +16,7 @@ extra-source-files:
 # To avoid duplicated efforts in documentation and dealing with the
 # complications of embedding Haddock markup inside cabal files, it is
 # common to point users to the README.md file.
-description: Please see the README on GitHub at <https://github.com/githubuser/hava#readme>
+description: Please see the README on GitHub at <https://github.com/laban211/hava#readme>
 
 dependencies:
   - base >= 4.7 && < 5

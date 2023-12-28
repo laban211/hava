@@ -6,18 +6,17 @@ cabal-version: 1.12
 
 name:           hava
 version:        0.1.0.0
-description:    Please see the README on GitHub at <https://github.com/githubuser/hava#readme>
+description:    Please see the README on GitHub at <https://github.com/laban211/hava#readme>
 homepage:       https://github.com/laban211/hava#readme
 bug-reports:    https://github.com/laban211/hava/issues
-author:         Author name here
-maintainer:     example@example.com
-copyright:      2021 Author Daniel Tabacskó
-license:        BSD3
+author:         Daniel Tabacskó
+maintainer:     lalaban211@gmail.com
+copyright:      2023 Author Daniel Tabacskó
+license:        MIT
 license-file:   LICENSE
 build-type:     Simple
 extra-source-files:
     README.md
-    ChangeLog.md
 
 source-repository head
   type: git
