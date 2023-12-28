@@ -2,7 +2,7 @@ module PrettyPrint
   ( createBuySellTable
   , createGroupByCompanyTable
   , createTableRow
-  , createNoSepTableRow
+  , createColumnsRow
   , PrintableCell(..)
   ) where
 
@@ -175,20 +175,20 @@ createCellFromText title len =
   PrintableCell { content = title, maxLength = len }
 
 createTableRow :: [PrintableCell] -> Text
-createTableRow x = sep <> foldl' joinText (T.pack "") x
- where
-  joinText acc elem =
-    T.append acc (justifyText (content elem) (maxLength elem) <> sep)
-  justifyText text len = ellipsisText len $ justifyLeft len ' ' text
-  sep = T.pack "|"
+createTableRow x =
+  let sep       = T.pack "|"
+      rowAsText = map cellToText x
+  in  sep <> T.intercalate sep rowAsText <> sep
 
-createNoSepTableRow :: [PrintableCell] -> Text
-createNoSepTableRow x = sep <> foldl' joinText (T.pack "") x
- where
-  joinText acc elem =
-    T.append acc (justifyText (content elem) (maxLength elem) <> sep)
-  justifyText text len = ellipsisText len $ justifyLeft len ' ' text
-  sep = T.pack " "
+createColumnsRow :: [PrintableCell] -> Int -> Text
+createColumnsRow cells indentWidth =
+  let indent    = T.replicate indentWidth $ T.pack " "
+      rowAsText = map cellToText cells
+  in  indent <> T.intercalate indent rowAsText
+
+cellToText :: PrintableCell -> Text
+cellToText x = justifyText (content x) (maxLength x)
+  where justifyText text len = ellipsisText len $ justifyLeft len ' ' text
 
 ellipsisText :: Int -> Text -> Text
 ellipsisText len content = if T.length content > len

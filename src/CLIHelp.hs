@@ -26,25 +26,29 @@ printUsage :: IO ()
 printUsage = do
     let aMaxLen = maximum $ map (length . fst) usages
     let bMaxLen = maximum $ map (length . snd) usages
-    let
-        printRow = PP.createNoSepTableRow
+    let cells =
             [ PP.PrintableCell (T.pack "hava [option] [path-to-csv-file]")
                                (aMaxLen + 3)
             , PP.PrintableCell
                 (T.pack "Run Hava in <option>-mode for Avanza transaction file")
                 bMaxLen
             ]
+    let printRow = PP.createColumnsRow cells 2
 
-    T.putStrLn (T.pack "Usage:")
+    printSection "Usage"
     T.putStrLn printRow
 
 
 printCmdLineOpts :: [CommandLineOption] -> IO ()
 printCmdLineOpts options = do
-    let printRow opt = PP.createNoSepTableRow
+    let createCellWithOpts opt =
             [ PP.PrintableCell (T.pack $ longArg opt ++ ", " ++ shortArg opt) 27
             , PP.PrintableCell (T.pack $ description opt) 40
             ]
+    let printRow opts = PP.createColumnsRow (createCellWithOpts opts) 2
 
-    T.putStrLn (T.pack "Options:")
+    printSection "Options"
     mapM_ (T.putStrLn . printRow) options
+
+printSection :: String -> IO ()
+printSection x = T.putStrLn (T.pack $ x <> ":")
