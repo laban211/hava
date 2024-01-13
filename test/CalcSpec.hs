@@ -7,21 +7,26 @@ module CalcSpec
 import qualified Calc                          as C
 import qualified Data.Text                     as T
 import qualified Test.HUnit.Base               as HU
-import           Types.AvaProfitYieldingRow     ( AvaProfitYieldingRow(..) )
-import           Types.AvanzaBuySellRow         ( Action(..)
-                                                , AvanzaBuySellRow(..)
-                                                )
-import qualified Types.AvanzaBuySellRow        as AvanzaBuySellRow
-import qualified Types.AvanzaDividendRow       as AvanzaDividendRow
-import           Types.AvanzaDividendRow        ( Action(Dividend)
-                                                , AvanzaDividendRow(..)
-                                                )
 import           Types.Money                    ( Money )
-import           Types.UtilTypes                ( SortedByDateList
-                                                    ( SortedByDateList
-                                                    )
+import           Types.Transaction.GenericTransaction
+                                                ( GenericTransaction(..) )
+import           Types.Transaction.TransactionBuySell
+                                                ( Action(..)
+                                                , TransactionBuySell(..)
                                                 )
-import           Util                           ( alwaysNegative )
+import qualified Types.Transaction.TransactionBuySell
+                                               as TransactionBuySell
+import           Types.Transaction.TransactionDividend
+                                                ( Action(..)
+                                                , TransactionDividend(..)
+                                                )
+import           Types.Transaction.TransactionProfitYielding
+                                                ( TransactionProfitYielding(..)
+                                                )
+import           Types.UtilTypes                ( SortedByDateList(..) )
+import           Util                           ( SortableByDate(..)
+                                                , alwaysNegative
+                                                )
 
 tests :: HU.Test
 tests = HU.TestList
@@ -77,19 +82,20 @@ testCalcTotalProfitForCompany = HU.TestList
         )
     ]
   where
-    crB amnt qty = BuySellRowWrapper
+    crB amnt qty = TransactionBuySellWrapper
         $ createBuySellRowWithPlaceHolders Buy (alwaysNegative amnt) qty
     -- buy amnt is expressed as a negative number ^
-    crS amnt qty = BuySellRowWrapper
+    crS amnt qty = TransactionBuySellWrapper
         $ createBuySellRowWithPlaceHolders Sell amnt (alwaysNegative qty)
     --     sell qty is expressed as a negative number ^
-    crD amnt = DividendRowWrapper $ createDividendRowWithPlaceHolders amnt
+    crD amnt =
+        TransactionDividendWrapper $ createDividendRowWithPlaceHolders amnt
 
 -- Utility functions for test suite
 
 createBuySellRowWithPlaceHolders
-    :: AvanzaBuySellRow.Action -> Money -> Int -> AvanzaBuySellRow
-createBuySellRowWithPlaceHolders action amnt qty = AvanzaBuySellRow
+    :: TransactionBuySell.Action -> Money -> Int -> TransactionBuySell
+createBuySellRowWithPlaceHolders action amnt qty = GenericTransaction
     { date     = placeHolder
     , account  = placeHolder
     , action   = action
@@ -105,8 +111,8 @@ createBuySellRowWithPlaceHolders action amnt qty = AvanzaBuySellRow
     }
     where placeHolder = T.pack "placeHolder"
 
-createDividendRowWithPlaceHolders :: Money -> AvanzaDividendRow
-createDividendRowWithPlaceHolders amnt = AvanzaDividendRow
+createDividendRowWithPlaceHolders :: Money -> TransactionDividend
+createDividendRowWithPlaceHolders amnt = GenericTransaction
     { date     = placeHolder
     , account  = placeHolder
     , action   = Dividend
