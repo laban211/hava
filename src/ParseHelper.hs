@@ -47,18 +47,10 @@ import           Data.Csv                       ( (.:)
                                                 , decodeByNameWith
                                                 , defaultDecodeOptions
                                                 )
-import           Data.Function                  ( (&) )
-import           Data.Maybe                     ( fromJust )
 import           Data.Text                      ( Text )
-import           Data.Text                     as T
-                                                ( pack
-                                                , singleton
-                                                )
-import           Data.Text.Encoding             ( )
+import qualified Data.Text                     as T
 import qualified Data.Text.Encoding            as T
 import qualified Data.Vector                   as V
-import           GHC.TypeLits                   ( Symbol )
-import           Text.Read                      ( readMaybe )
 
 -- Types
 import           Types.Money                    ( Money(..) )
@@ -95,8 +87,10 @@ instance FromField Money where
   parseField s = parseMoney s
 
 parseMoney :: Field -> Parser Money
-parseMoney x =
-  BS.replace (BS.pack ",") (BS.pack ".") x & BSL.unpack & read & pure
+parseMoney x = pure . read . BSL.unpack $ BS.replace comma dot x
+ where
+  comma = BS.pack ","
+  dot   = BS.pack "."
 
 processData :: ByteString.ByteString -> [Transaction]
 processData csvData = case decodeByNameWith decOptions (dropBOM csvData) of
