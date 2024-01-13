@@ -8,8 +8,6 @@
 module ParseHelper
   ( processData
   , printableMoney
-  , mult
-  , dive
   ) where
 
 -- bytestring
@@ -68,13 +66,6 @@ import           Types.Transaction.GenericTransaction
                                                 ( GenericTransaction(..)
                                                 , Transaction(..)
                                                 )
-
--- todo: move
-mult :: Money -> Double -> Money
-mult x y = Money $ unMoney x * y
-
-dive :: Money -> Double -> Money
-dive x y = Money $ unMoney x * y
 
 instance FromNamedRecord Transaction where
   parseNamedRecord r =

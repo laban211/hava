@@ -17,28 +17,20 @@ import           Control.Exception              ( ArithException(DivideByZero)
                                                 , Exception
                                                 , throw
                                                 )
-import           Data.Foldable
+import           Data.Foldable                  ( Foldable(foldl', toList) )
 import           Data.Map                       ( Map )
 import qualified Data.Map                      as Map
-import           Data.Maybe                     ( fromJust
-                                                , fromMaybe
-                                                , isJust
-                                                , mapMaybe
+import           Data.Maybe                     ( mapMaybe
                                                 , maybeToList
                                                 )
 import           Data.Text                      ( Text )
-import           Data.Text                     as T
-                                                ( pack )
+import qualified Data.Text                     as T
 import           Debug.Trace                    ( trace
                                                 , traceShowId
                                                 )
-import           ParseHelper                    ( dive
-                                                , mult
-                                                )
-import           Types.Money                    ( Money(Money, unMoney) )
+import           Types.Money                    ( Money(..) )
 import           Types.Transaction.GenericTransaction
-                                                ( GenericTransaction(..)
-                                                , Transaction
+                                                ( Transaction
                                                 , getAction
                                                 , getAmount
                                                 , getCompany
