@@ -6,10 +6,7 @@
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 
 module Types.UtilTypes
-  ( HasAction(..)
-  , CommonAvanzaRowFields(..)
-  , ProfitYieldingFields(..)
-  , parseInt
+  ( parseInt
   , parseDouble
   , parseMoney
   , parseMoneyDefault0
@@ -43,23 +40,6 @@ parseMoneyDefault0 :: Text -> Money
 parseMoneyDefault0 t = case parseMoney t of
   Just m  -> m
   Nothing -> Money 0.0
-
-class CommonAvanzaRowFields a where
-  getDate     ::a -> Text
-  getAccount  ::a -> Text
-  getCompany  ::a -> Text
-  getCurrency ::a -> Text
-  getIsin     ::a -> Text
-
-class (CommonAvanzaRowFields a, HasAction a) => ProfitYieldingFields a where
-  getRate   :: a -> Money
-  getAmount :: a -> Money
-  getCourtage :: a -> Money
-  getQuantity :: a-> Int
-
-class HasAction  a where
-  type ActionType a :: *
-  getAction :: a -> ActionType a
 
 newtype SortedByDateList a = SortedByDateList{ getSortedByDateList :: [a] }
   deriving (Show, Eq, Ord, Functor, Foldable)

@@ -7,10 +7,7 @@
 
 module ParseHelper
   ( processData
-  , AvanzaRow
   , printableMoney
-  , mult
-  , dive
   ) where
 
 -- bytestring
@@ -50,34 +47,21 @@ import           Data.Csv                       ( (.:)
                                                 , decodeByNameWith
                                                 , defaultDecodeOptions
                                                 )
-import           Data.Function                  ( (&) )
-import           Data.Maybe                     ( fromJust )
 import           Data.Text                      ( Text )
-import           Data.Text                     as T
-                                                ( pack
-                                                , singleton
-                                                )
-import           Data.Text.Encoding             ( )
+import qualified Data.Text                     as T
 import qualified Data.Text.Encoding            as T
 import qualified Data.Vector                   as V
-import           GHC.TypeLits                   ( Symbol )
-import           Text.Read                      ( readMaybe )
 
 -- Types
-import           Types.AvanzaBuySellRow         ( AvanzaBuySellRow )
-import           Types.AvanzaRow                ( AvanzaRow(..) )
 import           Types.Money                    ( Money(..) )
+import           Types.Transaction.GenericTransaction
+                                                ( GenericTransaction(..)
+                                                , Transaction(..)
+                                                )
 
--- todo: move
-mult :: Money -> Double -> Money
-mult x y = Money $ unMoney x * y
-
-dive :: Money -> Double -> Money
-dive x y = Money $ unMoney x * y
-
-instance FromNamedRecord AvanzaRow where
+instance FromNamedRecord Transaction where
   parseNamedRecord r =
-    AvanzaRow
+    GenericTransaction
       <$> r
       .:  "Datum"
       <*> r
@@ -103,10 +87,12 @@ instance FromField Money where
   parseField s = parseMoney s
 
 parseMoney :: Field -> Parser Money
-parseMoney x =
-  BS.replace (BS.pack ",") (BS.pack ".") x & BSL.unpack & read & pure
+parseMoney x = pure . read . BSL.unpack $ BS.replace comma dot x
+ where
+  comma = BS.pack ","
+  dot   = BS.pack "."
 
-processData :: ByteString.ByteString -> [AvanzaRow]
+processData :: ByteString.ByteString -> [Transaction]
 processData csvData = case decodeByNameWith decOptions (dropBOM csvData) of
   Left  err    -> error err
   Right (h, v) -> V.toList v

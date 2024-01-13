@@ -1,5 +1,6 @@
 module Calc
     ( filterBuySell
+    , filterProfitYieldingRows
     , groupByCompanySorted
     , calcTotalBuySellProfit
     , calcTotalProfitForCompany
@@ -10,87 +11,80 @@ module Calc
     , calcTotalDividendProfit
     , extractBuySellRows
     , extractDividendRows
-    , filterProfitYieldingRows
     ) where
 
 import           Control.Exception              ( ArithException(DivideByZero)
                                                 , Exception
                                                 , throw
                                                 )
-import           Data.Foldable
+import           Data.Foldable                  ( Foldable(foldl', toList) )
 import           Data.Map                       ( Map )
 import qualified Data.Map                      as Map
-import           Data.Maybe                     ( fromJust
-                                                , fromMaybe
-                                                , isJust
-                                                , mapMaybe
+import           Data.Maybe                     ( mapMaybe
+                                                , maybeToList
                                                 )
 import           Data.Text                      ( Text )
-import           Data.Text                     as T
-                                                ( pack )
+import qualified Data.Text                     as T
 import           Debug.Trace                    ( trace
                                                 , traceShowId
                                                 )
-import           ParseHelper                    ( dive
-                                                , mult
+import           Types.Money                    ( Money(..) )
+import           Types.Transaction.GenericTransaction
+                                                ( Transaction
+                                                , getAction
+                                                , getAmount
+                                                , getCompany
+                                                , getQuantity
                                                 )
-import           Types.AvaProfitYieldingRow     ( AvaProfitYieldingRow(..)
-                                                , createProfitYieldingRow
-                                                )
-import           Types.AvanzaBuySellRow         ( Action(..)
-                                                , AvanzaBuySellRow(..)
+import           Types.Transaction.TransactionBuySell
+                                                ( Action(..)
+                                                , TransactionBuySell(..)
                                                 , isBuy
                                                 , isSell
-                                                , transformToBuySellRow
+                                                , transformToBuySell
                                                 )
-import           Types.AvanzaDividendRow        ( Action(..)
-                                                , AvanzaDividendRow(..)
+import           Types.Transaction.TransactionDividend
+                                                ( Action(..)
+                                                , TransactionDividend(..)
+                                                , transformToDividend
                                                 )
-import           Types.AvanzaRow                ( AvanzaRow(AvanzaRow) )
-import qualified Types.AvanzaRow               as AvanzaRow
-import           Types.Money                    ( Money(Money, unMoney) )
-import           Types.UtilTypes                ( CommonAvanzaRowFields(..)
-                                                , HasAction(getAction)
-                                                , ProfitYieldingFields(..)
-                                                , SortedByDateList(..)
+import           Types.Transaction.TransactionProfitYielding
+                                                ( TransactionProfitYielding(..)
+                                                , extractBuySellRows
+                                                , extractDividendRows
+                                                , extractGenericTransaction
                                                 )
-import           Util                           ( sortByDate )
+import           Types.UtilTypes                ( SortedByDateList(..) )
+import           Util                           ( SortableByDate(..) )
 
-filterBuySell :: [AvanzaRow] -> [AvanzaBuySellRow]
-filterBuySell = mapMaybe transformToBuySellRow
+filterBuySell :: [Transaction] -> [TransactionBuySell]
+filterBuySell = mapMaybe transformToBuySell
 
-filterProfitYieldingRows :: [AvanzaRow] -> [AvaProfitYieldingRow]
-filterProfitYieldingRows = mapMaybe createProfitYieldingRow
-
-extractBuySellRows
-    :: Foldable f => f AvaProfitYieldingRow -> [AvanzaBuySellRow]
-extractBuySellRows = foldMap extractBuySellRow
+filterProfitYieldingRows :: [Transaction] -> [TransactionProfitYielding]
+filterProfitYieldingRows = concatMap transform
   where
-    extractBuySellRow :: AvaProfitYieldingRow -> [AvanzaBuySellRow]
-    extractBuySellRow (BuySellRowWrapper buySellRow) = [buySellRow]
-    extractBuySellRow _                              = []
-
-extractDividendRows
-    :: Foldable f => f AvaProfitYieldingRow -> [AvanzaDividendRow]
-extractDividendRows = foldMap extractDividendRow
-  where
-    extractDividendRow :: AvaProfitYieldingRow -> [AvanzaDividendRow]
-    extractDividendRow (DividendRowWrapper dividendRow) = [dividendRow]
-    extractDividendRow _ = []
+    transform :: Transaction -> [TransactionProfitYielding]
+    transform x =
+        maybeToList (TransactionBuySellWrapper <$> transformToBuySell x)
+            ++ maybeToList
+                   (TransactionDividendWrapper <$> transformToDividend x)
 
 groupByCompanySorted
-    :: (CommonAvanzaRowFields a, Foldable f, Show a)
-    => f a
-    -> Map Text (SortedByDateList a)
+    :: Foldable f
+    => f TransactionProfitYielding
+    -> Map Text (SortedByDateList TransactionProfitYielding)
 groupByCompanySorted input =
-    let toMapEntry x = Map.singleton (getCompany x) [x]
+    let
+        toMapEntry x =
+            Map.singleton (getCompany $ extractGenericTransaction x) [x]
         mergedMap = foldl' (Map.unionWith (<>))
                            Map.empty
                            (map toMapEntry (toList input))
-    in  Map.map sortByDate mergedMap
+    in
+        Map.map sortByDate mergedMap
 
 -- todo maybe change name at some point
-calcTotalBuySellProfit :: [AvanzaBuySellRow] -> Money
+calcTotalBuySellProfit :: [TransactionBuySell] -> Money
 calcTotalBuySellProfit = sum . map getAmount
 
 data StateCSSPBC = StateCSSPBC
@@ -101,7 +95,8 @@ data StateCSSPBC = StateCSSPBC
     }
     deriving Show
 
-calcTotalProfitForCompany :: SortedByDateList AvaProfitYieldingRow -> Money
+calcTotalProfitForCompany
+    :: SortedByDateList TransactionProfitYielding -> Money
 calcTotalProfitForCompany rows =
     let result = foldr processRow initState rows
     in  totalSellProfit result + totalDividendProfit result
@@ -112,9 +107,9 @@ calcTotalProfitForCompany rows =
                             , totalSellProfit     = Money 0
                             }
 
-    processRow :: AvaProfitYieldingRow -> StateCSSPBC -> StateCSSPBC
+    processRow :: TransactionProfitYielding -> StateCSSPBC -> StateCSSPBC
     -- buy/sell
-    processRow (BuySellRowWrapper row) state = case getAction row of
+    processRow (TransactionBuySellWrapper row) state = case getAction row of
         Buy ->
             let newState = state
                     { currQuantity = currQuantity state + getQuantity row
@@ -142,7 +137,7 @@ calcTotalProfitForCompany rows =
             in
                 newState
     -- dividend
-    processRow (DividendRowWrapper row) state = state
+    processRow (TransactionDividendWrapper row) state = state
         { totalDividendProfit = totalDividendProfit state + abs (getAmount row)
         }
 
@@ -165,14 +160,14 @@ calcSellProfit quantity amount soldQuantity soldAmount
     avgSell = soldAmount / fromIntegral soldQuantity
 
 
-calcNumBought :: [AvanzaBuySellRow] -> Int
+calcNumBought :: [TransactionBuySell] -> Int
 calcNumBought = sum . map getQuantity . filter isBuy
 
-calcNumSold :: [AvanzaBuySellRow] -> Int
+calcNumSold :: [TransactionBuySell] -> Int
 calcNumSold = abs . sum . map getQuantity . filter isSell
 
-calcRemainingAmount :: [AvanzaBuySellRow] -> Int
+calcRemainingAmount :: [TransactionBuySell] -> Int
 calcRemainingAmount = sum . map getQuantity
 
-calcTotalDividendProfit :: [AvanzaDividendRow] -> Money
+calcTotalDividendProfit :: [TransactionDividend] -> Money
 calcTotalDividendProfit = sum . map getAmount
