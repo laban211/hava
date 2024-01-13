@@ -36,26 +36,26 @@ import           GHC.Base                       ( join )
 import           ParseHelper                    ( printableMoney )
 import           Prelude
 import           Text.Printf                    ( printf )
-import           Types.AvaProfitYieldingRow     ( AvaProfitYieldingRow )
-import           Types.AvanzaBuySellRow         ( AvanzaBuySellRow
-                                                  ( AvanzaBuySellRow
-                                                  )
-                                                )
-import qualified Types.AvanzaBuySellRow        as AvanzaBuySellRow
-import           Types.AvanzaRow                ( AvanzaRow )
-import qualified Types.AvanzaRow               as AvanzaRow
-                                                ( AvanzaRow
-                                                , company
-                                                )
 import           Types.Money                    ( Money(unMoney) )
-import           Types.UtilTypes                ( CommonAvanzaRowFields
-                                                  ( getCompany
+import           Types.Transaction.GenericTransaction
+                                                ( GenericTransaction
+                                                  ( GenericTransaction
                                                   )
-                                                , HasAction(getAction)
-                                                , SortedByDateList
-                                                  ( getSortedByDateList
-                                                  )
+                                                , getAction
+                                                , getAmount
+                                                , getCompany
+                                                , getCourtage
+                                                , getDate
+                                                , getQuantity
+                                                , getRate
                                                 )
+import           Types.Transaction.TransactionBuySell
+                                                ( TransactionBuySell(..) )
+import           Types.Transaction.TransactionProfitYielding
+                                                ( TransactionProfitYielding
+                                                , extractGenericTransaction
+                                                )
+import           Types.UtilTypes                ( SortedByDateList(..) )
 
 data PrintableCell = PrintableCell
   { content   :: Text
@@ -74,7 +74,7 @@ createPrettyTable header content spacing =
 
 -- Buy / sell
 
-createBuySellTable :: [AvanzaBuySellRow] -> Text
+createBuySellTable :: [TransactionBuySell] -> Text
 createBuySellTable rows = createPrettyTable header content spacing
  where
   header  = printableBuySellHeader
@@ -93,29 +93,22 @@ printableBuySellHeader =
   ]
 
 
-printableAllBuySellContent :: AvanzaBuySellRow -> [PrintableCell]
+printableAllBuySellContent :: TransactionBuySell -> [PrintableCell]
 printableAllBuySellContent x =
-  [ PrintableCell { content = AvanzaBuySellRow.date x, maxLength = 11 }
-  , PrintableCell { content = AvanzaBuySellRow.company x, maxLength = 30 }
+  [ PrintableCell { content = getDate x, maxLength = 11 }
+  , PrintableCell { content = getCompany x, maxLength = 30 }
   , PrintableCell { content = T.pack $ show $ getAction x, maxLength = 10 }
-  , PrintableCell { content   = T.pack $ show (AvanzaBuySellRow.quantity x)
-                  , maxLength = 10
-                  }
-  , PrintableCell { content   = T.pack $ show (AvanzaBuySellRow.rate x)
-                  , maxLength = 10
-                  }
-  , PrintableCell { content   = T.pack $ show (AvanzaBuySellRow.amount x)
-                  , maxLength = 10
-                  }
-  , PrintableCell { content   = T.pack $ show (AvanzaBuySellRow.courtage x)
-                  , maxLength = 10
-                  }
+  , PrintableCell { content = T.pack $ show (getQuantity x), maxLength = 10 }
+  , PrintableCell { content = T.pack $ show (getRate x), maxLength = 10 }
+  , PrintableCell { content = T.pack $ show (getAmount x), maxLength = 10 }
+  , PrintableCell { content = T.pack $ show (getCourtage x), maxLength = 10 }
   ]
 
 -- Group by company
 
 -- todo: in the future, create an even more general type
-createGroupByCompanyTable :: [SortedByDateList AvaProfitYieldingRow] -> Text
+createGroupByCompanyTable
+  :: [SortedByDateList TransactionProfitYielding] -> Text
 createGroupByCompanyTable rows = createPrettyTable header content spacing
  where
   header  = groupByCompanyHeader
@@ -138,9 +131,10 @@ groupByCompanyHeader = zipWith
   groupByCompanySpacing
 
 groupByCompanyContent
-  :: SortedByDateList AvaProfitYieldingRow -> [PrintableCell]
+  :: SortedByDateList TransactionProfitYielding -> [PrintableCell]
 groupByCompanyContent rows =
-  let company      = getCompany . head $ getSortedByDateList rows
+  let company =
+        getCompany . extractGenericTransaction . head $ getSortedByDateList rows
       buySellRows  = extractBuySellRows rows
       dividendRows = extractDividendRows rows
       tableRows =

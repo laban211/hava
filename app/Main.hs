@@ -28,10 +28,11 @@ import qualified Data.Vector                   as V
 import           ParseHelper                    ( processData )
 import qualified PrettyPrint                   as PP
 import           System.Environment
-import           Types.AvanzaRow                ( AvanzaRow )
 import           Types.CLITypes                 ( CommandLineOption(..) )
+import           Types.Transaction.GenericTransaction
+                                                ( Transaction )
 import           Types.UtilTypes                ( SortedByDateList(..) )
-import           Util                           ( sortByDate )
+import           Util                           ( SortableByDate(..) )
 
 
 main :: IO ()
@@ -83,7 +84,7 @@ printGroupByComany filePath = do
 
   T.putStr printContent
 
-readCsv :: FilePath -> IO [AvanzaRow]
+readCsv :: FilePath -> IO [Transaction]
 readCsv filePath = do
   csvData <- BSL.readFile filePath
   let rows = processData csvData

@@ -28,12 +28,12 @@ library
       CLIHelp
       ParseHelper
       PrettyPrint
-      Types.AvanzaBuySellRow
-      Types.AvanzaDividendRow
-      Types.AvanzaRow
-      Types.AvaProfitYieldingRow
       Types.CLITypes
       Types.Money
+      Types.Transaction.GenericTransaction
+      Types.Transaction.TransactionBuySell
+      Types.Transaction.TransactionDividend
+      Types.Transaction.TransactionProfitYielding
       Types.UtilTypes
       Util
   other-modules:
