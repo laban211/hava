@@ -6,6 +6,8 @@ investors, to easily overview how different companies in their portfolio are
 performing. By parsing Avanza's exported CSV files, Hava provides insights
 into investment.
 
+The main goal of this project is for me to teach myself Haskell.
+
 ## Getting Started
 
 **Prerequisites:**
