@@ -29,9 +29,7 @@ data ParsedTransaction = TransactionBuySell TransactionBuySell
     deriving (Show)
 
 mapMaybeParsedTransaction :: [Transaction] -> [ParsedTransaction]
--- mapMaybeParsedTransaction = mapMaybe classifyTransaction
-mapMaybeParsedTransaction txs =
-    let ret = traceShowId $ mapMaybe classifyTransaction txs in ret
+mapMaybeParsedTransaction = mapMaybe classifyTransaction
 
 classifyTransaction :: Transaction -> Maybe ParsedTransaction
 classifyTransaction tx@GenericTransaction { action = action } =
