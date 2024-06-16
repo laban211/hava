@@ -10,6 +10,8 @@ import qualified Test.HUnit.Base               as HU
 import           Types.Money                    ( Money )
 import           Types.Transaction.GenericTransaction
                                                 ( GenericTransaction(..) )
+import           Types.Transaction.ParsedTransaction
+                                                ( ParsedTransaction(..) )
 import           Types.Transaction.TransactionBuySell
                                                 ( Action(..)
                                                 , TransactionBuySell(..)
@@ -23,11 +25,14 @@ import           Types.Transaction.TransactionDividend
 import           Types.Transaction.TransactionProfitYielding
                                                 ( TransactionProfitYielding(..)
                                                 )
+import           Types.Transaction.TransactionSplit
+                                                ( Action(..)
+                                                , TransactionSplit(..)
+                                                )
 import           Types.UtilTypes                ( SortedByDateList(..) )
 import           Util                           ( SortableByDate(..)
                                                 , alwaysNegative
                                                 )
-
 tests :: HU.Test
 tests = HU.TestList
     [ HU.TestLabel "Calculate sell profit" testCalcSellProfit
@@ -80,16 +85,32 @@ testCalcTotalProfitForCompany = HU.TestList
         ( C.calcTotalProfitForCompany
         $ SortedByDateList [crS 800 1, crD 100, crB 1000 1]
         )
+    , shouldEq
+        "With a stock split in the mix"
+        1000
+        ( C.calcTotalProfitForCompany
+        $ SortedByDateList
+        -- reverse for readability, first transaction in time first
+        $ reverse
+              [
+                -- Buy 1 stock for 1000
+                crB 1000 1
+              -- stock split 1 -> 3
+              , crSp 2
+              -- sell all stocks for 2000 (1000 profit since buy)
+              , crS 2000 3
+              ]
+        )
     ]
   where
-    crB amnt qty = TransactionBuySellWrapper
+    crB amnt qty = TransactionBuySell
         $ createBuySellRowWithPlaceHolders Buy (alwaysNegative amnt) qty
     -- buy amnt is expressed as a negative number ^
-    crS amnt qty = TransactionBuySellWrapper
+    crS amnt qty = TransactionBuySell
         $ createBuySellRowWithPlaceHolders Sell amnt (alwaysNegative qty)
     --     sell qty is expressed as a negative number ^
-    crD amnt =
-        TransactionDividendWrapper $ createDividendRowWithPlaceHolders amnt
+    crD amnt = TransactionDividend $ createDividendRowWithPlaceHolders amnt
+    crSp qty = TransactionSplit $ createSplitRowWithPlaceHolders qty
 
 -- Utility functions for test suite
 
@@ -100,11 +121,9 @@ createBuySellRowWithPlaceHolders action amnt qty = GenericTransaction
     , account  = placeHolder
     , action   = action
     , company  = placeHolder
-    -- We care about this field
-    , quantity = qty
+    , quantity = qty -- We care about this field
     , rate     = 0
-    -- We care about this field
-    , amount   = amnt
+    , amount   = amnt -- We care about this field
     , courtage = 0
     , currency = placeHolder
     , isin     = placeHolder
@@ -119,9 +138,23 @@ createDividendRowWithPlaceHolders amnt = GenericTransaction
     , company  = placeHolder
     , quantity = 0
     , rate     = 4
-    -- this is the only field that matters
-    , amount   = amnt
+    , amount   = amnt -- this is the only field that matters
     , courtage = 0
+    , currency = placeHolder
+    , isin     = placeHolder
+    }
+    where placeHolder = T.pack "placeHolder"
+
+createSplitRowWithPlaceHolders :: Int -> TransactionSplit
+createSplitRowWithPlaceHolders qty = GenericTransaction
+    { date     = placeHolder
+    , account  = placeHolder
+    , action   = Split
+    , company  = placeHolder
+    , quantity = qty -- this is the only field that matters
+    , rate     = ()
+    , amount   = ()
+    , courtage = ()
     , currency = placeHolder
     , isin     = placeHolder
     }

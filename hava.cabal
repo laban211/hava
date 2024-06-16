@@ -31,9 +31,11 @@ library
       Types.CLITypes
       Types.Money
       Types.Transaction.GenericTransaction
+      Types.Transaction.ParsedTransaction
       Types.Transaction.TransactionBuySell
       Types.Transaction.TransactionDividend
       Types.Transaction.TransactionProfitYielding
+      Types.Transaction.TransactionSplit
       Types.UtilTypes
       Util
   other-modules:

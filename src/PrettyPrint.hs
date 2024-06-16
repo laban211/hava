@@ -12,9 +12,6 @@ import           Calc                           ( calcNumBought
                                                 , calcTotalBuySellProfit
                                                 , calcTotalDividendProfit
                                                 , calcTotalProfitForCompany
-                                                , extractBuySellRows
-                                                , extractDividendRows
-                                                , filterBuySell
                                                 )
 import           Data.Function                  ( (&) )
 import           Data.List                      ( foldl' )
@@ -49,12 +46,16 @@ import           Types.Transaction.GenericTransaction
                                                 , getQuantity
                                                 , getRate
                                                 )
+import           Types.Transaction.ParsedTransaction
+                                                ( ParsedTransaction(..)
+                                                , extractBuySellRows
+                                                , extractDividendRows
+                                                , extractGenericTransaction
+                                                )
 import           Types.Transaction.TransactionBuySell
                                                 ( TransactionBuySell(..) )
 import           Types.Transaction.TransactionProfitYielding
-                                                ( TransactionProfitYielding
-                                                , extractGenericTransaction
-                                                )
+                                                ( TransactionProfitYielding )
 import           Types.UtilTypes                ( SortedByDateList(..) )
 
 data PrintableCell = PrintableCell
@@ -106,9 +107,7 @@ printableAllBuySellContent x =
 
 -- Group by company
 
--- todo: in the future, create an even more general type
-createGroupByCompanyTable
-  :: [SortedByDateList TransactionProfitYielding] -> Text
+createGroupByCompanyTable :: [SortedByDateList ParsedTransaction] -> Text
 createGroupByCompanyTable rows = createPrettyTable header content spacing
  where
   header  = groupByCompanyHeader
@@ -130,8 +129,7 @@ groupByCompanyHeader = zipWith
   ]
   groupByCompanySpacing
 
-groupByCompanyContent
-  :: SortedByDateList TransactionProfitYielding -> [PrintableCell]
+groupByCompanyContent :: SortedByDateList ParsedTransaction -> [PrintableCell]
 groupByCompanyContent rows =
   let company =
         getCompany . extractGenericTransaction . head $ getSortedByDateList rows
@@ -141,7 +139,7 @@ groupByCompanyContent rows =
         [ company
         , intToText $ calcNumBought buySellRows
         , intToText . calcNumSold $ buySellRows
-        , intToText . calcRemainingAmount $ buySellRows
+        , intToText . calcRemainingAmount $ getSortedByDateList rows
         , moneyToText . calcTotalBuySellProfit $ buySellRows
         , moneyToText . calcTotalDividendProfit $ dividendRows
         , moneyToText $ calcTotalProfitForCompany rows
