@@ -36,6 +36,10 @@ import           Types.Transaction.GenericTransaction
                                                 , getCompany
                                                 , getQuantity
                                                 )
+import           Types.Transaction.ParsedTransaction
+                                                ( ParsedTransaction(..)
+                                                , extractGenericTransaction
+                                                )
 import           Types.Transaction.TransactionBuySell
                                                 ( Action(..)
                                                 , TransactionBuySell(..)
@@ -52,7 +56,6 @@ import           Types.Transaction.TransactionProfitYielding
                                                 ( TransactionProfitYielding(..)
                                                 , extractBuySellRows
                                                 , extractDividendRows
-                                                , extractGenericTransaction
                                                 )
 import           Types.UtilTypes                ( SortedByDateList(..) )
 import           Util                           ( SortableByDate(..) )
@@ -71,8 +74,8 @@ filterProfitYieldingRows = concatMap transform
 
 groupByCompanySorted
     :: Foldable f
-    => f TransactionProfitYielding
-    -> Map Text (SortedByDateList TransactionProfitYielding)
+    => f ParsedTransaction
+    -> Map Text (SortedByDateList ParsedTransaction)
 groupByCompanySorted input =
     let
         toMapEntry x =
@@ -95,8 +98,7 @@ data StateCSSPBC = StateCSSPBC
     }
     deriving Show
 
-calcTotalProfitForCompany
-    :: SortedByDateList TransactionProfitYielding -> Money
+calcTotalProfitForCompany :: SortedByDateList ParsedTransaction -> Money
 calcTotalProfitForCompany rows =
     let result = foldr processRow initState rows
     in  totalSellProfit result + totalDividendProfit result
@@ -107,9 +109,9 @@ calcTotalProfitForCompany rows =
                             , totalSellProfit     = Money 0
                             }
 
-    processRow :: TransactionProfitYielding -> StateCSSPBC -> StateCSSPBC
+    processRow :: ParsedTransaction -> StateCSSPBC -> StateCSSPBC
     -- buy/sell
-    processRow (TransactionBuySellWrapper row) state = case getAction row of
+    processRow (TransactionBuySell row) state = case getAction row of
         Buy ->
             let newState = state
                     { currQuantity = currQuantity state + getQuantity row
@@ -137,11 +139,12 @@ calcTotalProfitForCompany rows =
             in
                 newState
     -- dividend
-    processRow (TransactionDividendWrapper row) state = state
+    processRow (TransactionDividend row) state = state
         { totalDividendProfit = totalDividendProfit state + abs (getAmount row)
         }
-
-
+    -- split 
+    processRow (TransactionSplit row) state =
+        state { currQuantity = currQuantity state + getQuantity row }
 
 newtype CustomException = DivideByZeroWithArg String
     deriving Show
@@ -166,8 +169,13 @@ calcNumBought = sum . map getQuantity . filter isBuy
 calcNumSold :: [TransactionBuySell] -> Int
 calcNumSold = abs . sum . map getQuantity . filter isSell
 
-calcRemainingAmount :: [TransactionBuySell] -> Int
-calcRemainingAmount = sum . map getQuantity
+calcRemainingAmount :: [ParsedTransaction] -> Int
+calcRemainingAmount = sum . map getQuantity'
+  where
+    getQuantity' :: ParsedTransaction -> Int
+    getQuantity' (TransactionBuySell x) = getQuantity x
+    getQuantity' (TransactionSplit   x) = getQuantity x
+    getQuantity' _                      = 0
 
 calcTotalDividendProfit :: [TransactionDividend] -> Money
 calcTotalDividendProfit = sum . map getAmount

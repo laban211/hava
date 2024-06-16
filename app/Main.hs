@@ -31,6 +31,8 @@ import           System.Environment
 import           Types.CLITypes                 ( CommandLineOption(..) )
 import           Types.Transaction.GenericTransaction
                                                 ( Transaction )
+import           Types.Transaction.ParsedTransaction
+                                                ( mapMaybeParsedTransaction )
 import           Types.UtilTypes                ( SortedByDateList(..) )
 import           Util                           ( SortableByDate(..) )
 
@@ -78,8 +80,8 @@ printBuySellHistory filePath = do
 printGroupByComany :: FilePath -> IO ()
 printGroupByComany filePath = do
   rows <- readCsv filePath
-  let profitRows       = filterProfitYieldingRows rows
-  let groupedByCompany = groupByCompanySorted profitRows
+  let paredTransactions = mapMaybeParsedTransaction rows
+  let groupedByCompany  = groupByCompanySorted paredTransactions
   let printContent = PP.createGroupByCompanyTable (Map.elems groupedByCompany)
 
   T.putStr printContent
