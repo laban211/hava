@@ -1,12 +1,10 @@
-{-# LANGUAGE RecordWildCards #-}
-
 module CalcSpec
-    ( tests
+    ( spec
     ) where
 
 import qualified Calc                          as C
 import qualified Data.Text                     as T
-import qualified Test.HUnit.Base               as HU
+import           Test.Hspec
 import           Types.Money                    ( Money )
 import           Types.Transaction.GenericTransaction
                                                 ( GenericTransaction(..) )
@@ -30,85 +28,78 @@ import           Types.Transaction.TransactionSplit
                                                 , TransactionSplit(..)
                                                 )
 import           Types.UtilTypes                ( SortedByDateList(..) )
-import           Util                           ( SortableByDate(..)
-                                                , alwaysNegative
-                                                )
-tests :: HU.Test
-tests = HU.TestList
-    [ HU.TestLabel "Calculate sell profit" testCalcSellProfit
-    , HU.TestLabel "Calculate dividend profit" testCalcDividendProfit
-    , HU.TestLabel "Calculate total sell and dividend profit for company"
-                   testCalcTotalProfitForCompany
-    ]
+import           Util                           ( alwaysNegative )
 
-shouldEq :: (Eq a, Show a) => String -> a -> a -> HU.Test
-shouldEq msg exp actual = HU.TestCase $ HU.assertEqual msg exp actual
+spec :: Spec
+spec = do
+    describe "Calculate sell profit"     testCalcSellProfit
+    describe "Calculate dividend profit" testCalcDividendProfit
+    describe "Calculate total sell and dividend profit for company"
+             testCalcTotalProfitForCompany
 
-testCalcSellProfit :: HU.Test
-testCalcSellProfit = HU.TestList
-    [ shouldEq "No profit"             0     (C.calcSellProfit 5 500 3 300)
-    , shouldEq "Positive Profit"       30    (C.calcSellProfit 5 500 3 330)
-    , shouldEq "Allow negative profit" (-30) (C.calcSellProfit 5 500 3 270)
-    ]
+testCalcSellProfit :: Spec
+testCalcSellProfit = do
+    it "should result in no profit" $ do
+        C.calcSellProfit 5 500 3 300 `shouldBe` 0
+    it "should result in positive profit" $ do
+        C.calcSellProfit 5 500 3 330 `shouldBe` 30
+    it "should allow negative profit" $ do
+        C.calcSellProfit 5 500 3 270 `shouldBe` (-30)
 
-testCalcDividendProfit :: HU.Test
-testCalcDividendProfit = HU.TestList
-    [ shouldEq "No profit"   0  (C.calcTotalDividendProfit [cr 0, cr 0, cr 0])
-    , shouldEq "Some profit" 40 (C.calcTotalDividendProfit [cr 20, cr 5, cr 15])
-    ]
+testCalcDividendProfit :: Spec
+testCalcDividendProfit = do
+    it "should result in no profit" $ do
+        C.calcTotalDividendProfit [cr 0, cr 0, cr 0] `shouldBe` 0
+    it "should result in some profit" $ do
+        C.calcTotalDividendProfit [cr 20, cr 5, cr 15] `shouldBe` 40
     where cr = createDividendRowWithPlaceHolders
 
-testCalcTotalProfitForCompany :: HU.Test
-testCalcTotalProfitForCompany = HU.TestList
-    [ shouldEq
-        "No profit"
-        0
-        (C.calcTotalProfitForCompany $ SortedByDateList [crS 10 1, crB 10 1])
-    , shouldEq "No sell, no profit"
-               0
-               (C.calcTotalProfitForCompany $ SortedByDateList [crB 10 1])
-    , shouldEq
-        "Positive profit"
-        100
-        ( C.calcTotalProfitForCompany
-        $ SortedByDateList [crS 198 1, crD 2, crB 100 1]
-        )
-    , shouldEq
-        "Positive profit (real case that confused me)"
-        1140
-        (C.calcTotalProfitForCompany $ SortedByDateList
-            [crS 2266 32, crS 2155 32, crB 1973 38, crB 980 20, crB 328 6]
-        )
-    , shouldEq
-        "Negative profit"
-        (-100)
-        ( C.calcTotalProfitForCompany
-        $ SortedByDateList [crS 800 1, crD 100, crB 1000 1]
-        )
-    , shouldEq
-        "With a stock split in the mix"
-        1000
-        ( C.calcTotalProfitForCompany
-        $ SortedByDateList
-        -- reverse for readability, first transaction in time first
-        $ reverse
-              [
-                -- Buy 1 stock for 1000
-                crB 1000 1
-              -- stock split 1 -> 3
-              , crSp 2
-              -- sell all stocks for 2000 (1000 profit since buy)
-              , crS 2000 3
-              ]
-        )
-    ]
+testCalcTotalProfitForCompany :: Spec
+testCalcTotalProfitForCompany = do
+    it "should result in no profit" $ do
+        C.calcTotalProfitForCompany (SortedByDateList [crS 10 1, crB 10 1])
+            `shouldBe` 0
+    it "should handle 'no sell, no profit'" $ do
+        C.calcTotalProfitForCompany (SortedByDateList [crB 10 1]) `shouldBe` 0
+    it "should result in positive profit" $ do
+        C.calcTotalProfitForCompany
+                (SortedByDateList [crS 198 1, crD 2, crB 100 1])
+            `shouldBe` 100
+    it "can handle positive profit (real case that confused me)" $ do
+        C.calcTotalProfitForCompany
+                (SortedByDateList
+                    [ crS 2266 32
+                    , crS 2155 32
+                    , crB 1973 38
+                    , crB 980  20
+                    , crB 328  6
+                    ]
+                )
+            `shouldBe` 1140
+    it "should result in negative profit" $ do
+        C.calcTotalProfitForCompany
+                (SortedByDateList [crS 800 1, crD 100, crB 1000 1])
+            `shouldBe` (-100)
+    it "can handle the 'stock split' transaction"
+        $          do
+                       -- reverse for readability, first transaction in time first
+                       C.calcTotalProfitForCompany
+                           (SortedByDateList $ reverse
+                               [
+                                 -- Buy 1 stock for 1000
+                                 crB 1000 1
+                                 -- stock split 1 -> 3
+                               , crSp 2
+                                 -- sell all stocks for 2000 (1000 profit since buy)
+                               , crS 2000 3
+                               ]
+                           )
+        `shouldBe` 1000
   where
     crB amnt qty = TransactionBuySell
         $ createBuySellRowWithPlaceHolders Buy (alwaysNegative amnt) qty
-    -- buy amnt is expressed as a negative number ^
     crS amnt qty = TransactionBuySell
         $ createBuySellRowWithPlaceHolders Sell amnt (alwaysNegative qty)
-    --     sell qty is expressed as a negative number ^
     crD amnt = TransactionDividend $ createDividendRowWithPlaceHolders amnt
     crSp qty = TransactionSplit $ createSplitRowWithPlaceHolders qty
 
