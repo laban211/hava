@@ -1,10 +1,6 @@
 import qualified CalcSpec
-import qualified Test.HUnit.Base               as HU
-import qualified Test.HUnit.Text               as HU
+import           Test.Hspec
 
 main :: IO ()
-main = do
-    calcCounts <- HU.runTestTT CalcSpec.tests
-    print calcCounts
-
-    putStrLn "Test spec finished"
+main = hspec $ do
+    describe "CalcSpec" CalcSpec.spec

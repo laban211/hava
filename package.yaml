@@ -30,7 +30,7 @@ dependencies:
   - utf8-string
   - containers
   - time
-  - HUnit
+  - hspec
 
 library:
   source-dirs: src
