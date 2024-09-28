@@ -86,13 +86,13 @@ createBuySellTable rows = createPrettyTable header content spacing
 
 printableBuySellHeader :: [PrintableCell]
 printableBuySellHeader =
-  [ createDefaultCell "Datum"       11
-  , createDefaultCell "Värdepapper" 30
-  , createDefaultCell "Typ"         10
-  , createDefaultCell "Antal"       10
-  , createDefaultCell "Kurs"        10
-  , createDefaultCell "Belopp"      10
-  , createDefaultCell "Courtage"    10
+  [ createCell "Datum"       11 LeftAlign
+  , createCell "Värdepapper" 30 LeftAlign
+  , createCell "Typ"         10 LeftAlign
+  , createCell "Antal"       10 RightAlign
+  , createCell "Kurs"        10 RightAlign
+  , createCell "Belopp"      10 RightAlign
+  , createCell "Courtage"    10 RightAlign
   ]
 
 
