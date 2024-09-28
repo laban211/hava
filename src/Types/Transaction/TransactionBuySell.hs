@@ -51,7 +51,7 @@ transformToBuySell (GenericTransaction date account action company quantity rate
                                     }
 
 instance SortableByDate TransactionBuySell where
-    getDate = getDate
+    getDate = date
 
 isBuy :: TransactionBuySell -> Bool
 isBuy x = action x == Buy
