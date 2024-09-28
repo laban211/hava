@@ -30,6 +30,7 @@ library
       PrettyPrint
       Types.CLITypes
       Types.Money
+      Types.PrintableCell
       Types.Transaction.GenericTransaction
       Types.Transaction.ParsedTransaction
       Types.Transaction.TransactionBuySell

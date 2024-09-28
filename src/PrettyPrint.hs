@@ -3,7 +3,6 @@ module PrettyPrint
   , createGroupByCompanyTable
   , createTableRow
   , createColumnsRow
-  , PrintableCell(..)
   ) where
 
 import           Calc                           ( calcNumBought
@@ -34,6 +33,13 @@ import           ParseHelper                    ( printableMoney )
 import           Prelude
 import           Text.Printf                    ( printf )
 import           Types.Money                    ( Money(unMoney) )
+import           Types.PrintableCell            ( PrintableCell(..)
+                                                , TextAlign(..)
+                                                , createCell
+                                                , createCellFromText
+                                                , createDefaultCell
+                                                , createDefaultCellFromText
+                                                )
 import           Types.Transaction.GenericTransaction
                                                 ( GenericTransaction
                                                   ( GenericTransaction
@@ -58,11 +64,6 @@ import           Types.Transaction.TransactionProfitYielding
                                                 ( TransactionProfitYielding )
 import           Types.UtilTypes                ( SortedByDateList(..) )
 
-data PrintableCell = PrintableCell
-  { content   :: Text
-  , maxLength :: Int
-  }
-
 createPrettyTable :: [PrintableCell] -> [[PrintableCell]] -> [Int] -> Text
 createPrettyTable header content spacing =
   sep
@@ -78,31 +79,36 @@ createPrettyTable header content spacing =
 createBuySellTable :: [TransactionBuySell] -> Text
 createBuySellTable rows = createPrettyTable header content spacing
  where
-  header  = printableBuySellHeader
-  content = map printableAllBuySellContent rows
+  header = printableBuySellHeader
+  mapContent row = printableAllBuySellContent row header
+  content = map mapContent rows
   spacing = map maxLength printableBuySellHeader
 
 printableBuySellHeader :: [PrintableCell]
 printableBuySellHeader =
-  [ createCell "Datum"       11
-  , createCell "Värdepapper" 30
-  , createCell "Typ"         10
-  , createCell "Antal"       10
-  , createCell "Kurs"        10
-  , createCell "Belopp"      10
-  , createCell "Courtage"    10
+  [ createDefaultCell "Datum"       11
+  , createDefaultCell "Värdepapper" 30
+  , createDefaultCell "Typ"         10
+  , createDefaultCell "Antal"       10
+  , createDefaultCell "Kurs"        10
+  , createDefaultCell "Belopp"      10
+  , createDefaultCell "Courtage"    10
   ]
 
 
-printableAllBuySellContent :: TransactionBuySell -> [PrintableCell]
-printableAllBuySellContent x =
-  [ PrintableCell { content = getDate x, maxLength = 11 }
-  , PrintableCell { content = getCompany x, maxLength = 30 }
-  , PrintableCell { content = T.pack $ show $ getAction x, maxLength = 10 }
-  , PrintableCell { content = T.pack $ show (getQuantity x), maxLength = 10 }
-  , PrintableCell { content = T.pack $ show (getRate x), maxLength = 10 }
-  , PrintableCell { content = T.pack $ show (getAmount x), maxLength = 10 }
-  , PrintableCell { content = T.pack $ show (getCourtage x), maxLength = 10 }
+printableAllBuySellContent
+  :: TransactionBuySell -> [PrintableCell] -> [PrintableCell]
+printableAllBuySellContent transaction = zipWith
+  (\content headerCell ->
+    createCellFromText content (maxLength headerCell) (textAlign headerCell)
+  )
+  [ getDate transaction
+  , getCompany transaction
+  , T.pack (show $ getAction transaction)
+  , T.pack (show $ getQuantity transaction)
+  , T.pack (show $ getRate transaction)
+  , T.pack (show $ getAmount transaction)
+  , T.pack (show $ getCourtage transaction)
   ]
 
 -- Group by company
@@ -110,41 +116,47 @@ printableAllBuySellContent x =
 createGroupByCompanyTable :: [SortedByDateList ParsedTransaction] -> Text
 createGroupByCompanyTable rows = createPrettyTable header content spacing
  where
-  header  = groupByCompanyHeader
-  content = map groupByCompanyContent rows
-  spacing = groupByCompanySpacing
-
+  header = groupByCompanyHeader
+  mapContent row = groupByCompanyContent row header
+  content = map mapContent rows
+  spacing = map maxLength groupByCompanyHeader
 
 -- | Företag | Köpt | Sålt | Nuv. balans | Vinst (kr) | Vinst sålda (kr) |
 groupByCompanyHeader :: [PrintableCell]
-groupByCompanyHeader = zipWith
-  createCell
-  [ "Företag"
-  , "Köpt"
-  , "Sålt"
-  , "Nuv. balans"
-  , "Vinst (kr)"
-  , "Utdelning (kr)"
-  , "Vinst sålda (kr)"
+groupByCompanyHeader = map
+  (\(title, len, textAlign) -> createCell title len textAlign)
+  [ ("Företag"         , 30, LeftAlign)
+  , ("Köpt"            , 10, RightAlign)
+  , ("Sålt"            , 10, RightAlign)
+  , ("Nuv. balans"     , 10, RightAlign)
+  , ("Vinst (kr)"      , 10, RightAlign)
+  , ("Utdelning (kr)"  , 10, RightAlign)
+  , ("Vinst sålda (kr)", 15, RightAlign)
   ]
-  groupByCompanySpacing
 
-groupByCompanyContent :: SortedByDateList ParsedTransaction -> [PrintableCell]
-groupByCompanyContent rows =
+groupByCompanyContent
+  :: SortedByDateList ParsedTransaction -> [PrintableCell] -> [PrintableCell]
+groupByCompanyContent rows header =
   let company =
         getCompany . extractGenericTransaction . head $ getSortedByDateList rows
       buySellRows  = extractBuySellRows rows
       dividendRows = extractDividendRows rows
       tableRows =
         [ company
-        , intToText $ calcNumBought buySellRows
+        , intToText . calcNumBought $ buySellRows
         , intToText . calcNumSold $ buySellRows
         , intToText . calcRemainingAmount $ getSortedByDateList rows
         , moneyToText . calcTotalBuySellProfit $ buySellRows
         , moneyToText . calcTotalDividendProfit $ dividendRows
-        , moneyToText $ calcTotalProfitForCompany rows
+        , moneyToText . calcTotalProfitForCompany $ rows
         ]
-  in  zipWith createCellFromText tableRows groupByCompanySpacing
+  in  zipWith
+        (\title headerCell -> createCellFromText title
+                                                 (maxLength headerCell)
+                                                 (textAlign headerCell)
+        )
+        tableRows
+        header
 
 intToText :: Int -> Text
 intToText = T.pack . show
@@ -152,19 +164,9 @@ intToText = T.pack . show
 moneyToText :: Money -> Text
 moneyToText = T.pack . printf "%.2f" . unMoney
 
-groupByCompanySpacing :: [Int]
-groupByCompanySpacing = [30, 10, 10, 10, 10, 10, 15]
 
 
 -- General utility functions
-
-createCell :: String -> Int -> PrintableCell
-createCell title len =
-  PrintableCell { content = T.pack title, maxLength = len }
-
-createCellFromText :: Text -> Int -> PrintableCell
-createCellFromText title len =
-  PrintableCell { content = title, maxLength = len }
 
 createTableRow :: [PrintableCell] -> Text
 createTableRow x =
@@ -179,8 +181,12 @@ createColumnsRow cells indentWidth =
   in  indent <> T.intercalate indent rowAsText
 
 cellToText :: PrintableCell -> Text
-cellToText x = justifyText (content x) (maxLength x)
-  where justifyText text len = ellipsisText len $ justifyLeft len ' ' text
+cellToText x =
+  let justifyFn = case textAlign x of
+        LeftAlign  -> justifyLeft
+        RightAlign -> justifyRight
+      justifyText text len = ellipsisText len $ justifyFn len ' ' text
+  in  justifyText (content x) (maxLength x)
 
 ellipsisText :: Int -> Text -> Text
 ellipsisText len content = if T.length content > len

@@ -6,6 +6,9 @@ import qualified Data.Text                     as T
 import qualified Data.Text.IO                  as T
 import qualified PrettyPrint                   as PP
 import           Types.CLITypes                 ( CommandLineOption(..) )
+import           Types.PrintableCell            ( PrintableCell(..)
+                                                , createDefaultCell
+                                                )
 
 
 
@@ -27,10 +30,9 @@ printUsage = do
     let aMaxLen = maximum $ map (length . fst) usages
     let bMaxLen = maximum $ map (length . snd) usages
     let cells =
-            [ PP.PrintableCell (T.pack "hava [option] [path-to-csv-file]")
-                               (aMaxLen + 3)
-            , PP.PrintableCell
-                (T.pack "Run Hava in <option>-mode for Avanza transaction file")
+            [ createDefaultCell "hava [option] [path-to-csv-file]" (aMaxLen + 3)
+            , createDefaultCell
+                "Run Hava in <option>-mode for Avanza transaction file"
                 bMaxLen
             ]
     let printRow = PP.createColumnsRow cells 2
@@ -42,8 +44,8 @@ printUsage = do
 printCmdLineOpts :: [CommandLineOption] -> IO ()
 printCmdLineOpts options = do
     let createCellWithOpts opt =
-            [ PP.PrintableCell (T.pack $ longArg opt ++ ", " ++ shortArg opt) 27
-            , PP.PrintableCell (T.pack $ description opt) 40
+            [ createDefaultCell (longArg opt ++ ", " ++ shortArg opt) 27
+            , createDefaultCell (description opt)                     40
             ]
     let printRow opts = PP.createColumnsRow (createCellWithOpts opts) 2
 
