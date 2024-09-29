@@ -31,6 +31,7 @@ dependencies:
   - containers
   - time
   - hspec
+  - terminal-size
 
 library:
   source-dirs: src

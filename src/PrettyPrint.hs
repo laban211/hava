@@ -1,3 +1,4 @@
+{-# OPTIONS_GHC -Wno-missing-fields #-}
 module PrettyPrint
   ( createBuySellTable
   , createGroupByCompanyTable
@@ -14,8 +15,12 @@ import           Calc                           ( calcNumBought
                                                 )
 import           Data.Function                  ( (&) )
 import           Data.List                      ( foldl' )
-import           Data.Text                      ( Text )
-import           Data.Text                     as T
+import           Data.Maybe                     ( fromMaybe )
+import           Data.Text                      ( Text
+                                                , justifyLeft
+                                                , justifyRight
+                                                )
+import qualified Data.Text                     as T
                                                 ( append
                                                 , intercalate
                                                 , justifyLeft
@@ -33,12 +38,17 @@ import           ParseHelper                    ( printableMoney )
 import           Prelude
 import           Text.Printf                    ( printf )
 import           Types.Money                    ( Money(unMoney) )
-import           Types.PrintableCell            ( PrintableCell(..)
+import           Types.PrintableCell            ( CellWidth(..)
+                                                , FixedWidth(..)
+                                                , PrintableCell(..)
                                                 , TextAlign(..)
                                                 , createCell
                                                 , createCellFromText
                                                 , createDefaultCell
                                                 , createDefaultCellFromText
+                                                , createFilledCell
+                                                , createFixedCell
+                                                , isFill
                                                 )
 import           Types.Transaction.GenericTransaction
                                                 ( GenericTransaction
@@ -60,39 +70,57 @@ import           Types.Transaction.ParsedTransaction
                                                 )
 import           Types.Transaction.TransactionBuySell
                                                 ( TransactionBuySell(..) )
-import           Types.Transaction.TransactionProfitYielding
-                                                ( TransactionProfitYielding )
+import           Types.UiSize                   ( UiSize(..)
+                                                , uiSizeToCellWidth
+                                                )
 import           Types.UtilTypes                ( SortedByDateList(..) )
 
-createPrettyTable :: [PrintableCell] -> [[PrintableCell]] -> [Int] -> Text
-createPrettyTable header content spacing =
-  sep
-    <> (textToLine . createTableRow $ header)
-    <> sep
-    <> T.unlines (map createTableRow content)
-    <> sep
-  where sep = textToLine $ createHorizontalSeperator spacing
+
+
+
+createPrettyTable
+  :: UiSize
+  -> Int
+  -> [PrintableCell]
+  -> [[PrintableCell]]
+  -> [CellWidth]
+  -> Text
+createPrettyTable uiSize termWidth header content spacing =
+  let sep = textToLine $ createHorizontalSeperator $ map
+        (uiSizeToCellWidth uiSize)
+        spacing
+      fillWidths                = calcFillWidths uiSize termWidth header
+      createTableRowAppliedSize = createTableRow uiSize fillWidths
+  in  sep
+        <> (textToLine . createTableRowAppliedSize $ header)
+        <> sep
+        <> T.unlines (map createTableRowAppliedSize content)
+        <> sep
 
 
 -- Buy / sell
 
-createBuySellTable :: [TransactionBuySell] -> Text
-createBuySellTable rows = createPrettyTable header content spacing
+createBuySellTable :: UiSize -> Int -> [TransactionBuySell] -> Text
+createBuySellTable uiSize termWidth rows = createPrettyTable uiSize
+                                                             termWidth
+                                                             header
+                                                             content
+                                                             spacing
  where
   header = printableBuySellHeader
   mapContent row = printableAllBuySellContent row header
   content = map mapContent rows
-  spacing = map maxLength printableBuySellHeader
+  spacing = map width printableBuySellHeader
 
 printableBuySellHeader :: [PrintableCell]
 printableBuySellHeader =
-  [ createCell "Datum"       11 LeftAlign
-  , createCell "Värdepapper" 30 LeftAlign
-  , createCell "Typ"         10 LeftAlign
-  , createCell "Antal"       10 RightAlign
-  , createCell "Kurs"        10 RightAlign
-  , createCell "Belopp"      10 RightAlign
-  , createCell "Courtage"    10 RightAlign
+  [ createFixedCell "Datum"       FixedWidth { s = 11 } LeftAlign
+  , createFixedCell "Värdepapper" FixedWidth { s = 30 } LeftAlign
+  , createFixedCell "Typ"         FixedWidth { s = 10 } LeftAlign
+  , createFixedCell "Antal"       FixedWidth { s = 10 } RightAlign
+  , createFixedCell "Kurs"        FixedWidth { s = 10 } RightAlign
+  , createFixedCell "Belopp"      FixedWidth { s = 10 } RightAlign
+  , createFixedCell "Courtage"    FixedWidth { s = 10 } RightAlign
   ]
 
 
@@ -100,7 +128,7 @@ printableAllBuySellContent
   :: TransactionBuySell -> [PrintableCell] -> [PrintableCell]
 printableAllBuySellContent transaction = zipWith
   (\content headerCell ->
-    createCellFromText content (maxLength headerCell) (textAlign headerCell)
+    createCellFromText content (width headerCell) (textAlign headerCell)
   )
   [ getDate transaction
   , getCompany transaction
@@ -113,25 +141,33 @@ printableAllBuySellContent transaction = zipWith
 
 -- Group by company
 
-createGroupByCompanyTable :: [SortedByDateList ParsedTransaction] -> Text
-createGroupByCompanyTable rows = createPrettyTable header content spacing
+createGroupByCompanyTable
+  :: UiSize -> Int -> [SortedByDateList ParsedTransaction] -> Text
+createGroupByCompanyTable uiSize termWidth rows = createPrettyTable uiSize
+                                                                    termWidth
+                                                                    header
+                                                                    content
+                                                                    spacing
  where
   header = groupByCompanyHeader
   mapContent row = groupByCompanyContent row header
   content = map mapContent rows
-  spacing = map maxLength groupByCompanyHeader
+  spacing = map width header
 
 -- | Företag | Köpt | Sålt | Nuv. balans | Vinst (kr) | Vinst sålda (kr) |
 groupByCompanyHeader :: [PrintableCell]
-groupByCompanyHeader = map
-  (\(title, len, textAlign) -> createCell title len textAlign)
-  [ ("Företag"         , 30, LeftAlign)
-  , ("Köpt"            , 10, RightAlign)
-  , ("Sålt"            , 10, RightAlign)
-  , ("Nuv. balans"     , 10, RightAlign)
-  , ("Vinst (kr)"      , 10, RightAlign)
-  , ("Utdelning (kr)"  , 10, RightAlign)
-  , ("Vinst sålda (kr)", 15, RightAlign)
+groupByCompanyHeader =
+  [ createFilledCell "Företag" LeftAlign
+  , createFixedCell "Köpt"        FixedWidth { s = 10, l = Just 10 } RightAlign
+  , createFixedCell "Sålt"        FixedWidth { s = 10, l = Just 10 } RightAlign
+  , createFixedCell "Nuv. balans" FixedWidth { s = 10, l = Just 12 } RightAlign
+  , createFixedCell "Vinst (kr)"  FixedWidth { s = 10, l = Just 12 } RightAlign
+  , createFixedCell "Utdelning (kr)"
+                    FixedWidth { s = 10, l = Just 14 }
+                    RightAlign
+  , createFixedCell "Vinst sålda (kr)"
+                    FixedWidth { s = 15, l = Just 17 }
+                    RightAlign
   ]
 
 groupByCompanyContent
@@ -151,9 +187,8 @@ groupByCompanyContent rows header =
         , moneyToText . calcTotalProfitForCompany $ rows
         ]
   in  zipWith
-        (\title headerCell -> createCellFromText title
-                                                 (maxLength headerCell)
-                                                 (textAlign headerCell)
+        (\title headerCell ->
+          createCellFromText title (width headerCell) (textAlign headerCell)
         )
         tableRows
         header
@@ -168,25 +203,46 @@ moneyToText = T.pack . printf "%.2f" . unMoney
 
 -- General utility functions
 
-createTableRow :: [PrintableCell] -> Text
-createTableRow x =
+{- createTableRow :: UiSize -> Int -> [PrintableCell] -> Text
+createTableRow uiSize termWidth cells =
   let sep       = T.pack "|"
-      rowAsText = map cellToText x
+      rowAsText = map (cellToText uiSize) cells
+  in  sep <> T.intercalate sep rowAsText <> sep -}
+
+createTableRow :: UiSize -> [Int] -> [PrintableCell] -> Text
+createTableRow uiSize fillWidths cells =
+  let sep            = T.pack "|"
+      (rowAsText, _) = foldl' processCell ([], fillWidths) cells
   in  sep <> T.intercalate sep rowAsText <> sep
 
-createColumnsRow :: [PrintableCell] -> Int -> Text
-createColumnsRow cells indentWidth =
+ where
+  processCell :: ([Text], [Int]) -> PrintableCell -> ([Text], [Int])
+  processCell (accText, remainingFillWidths) cell =
+    let cellWidth = case width cell of
+          Fill     -> head remainingFillWidths  -- Use the first available fill width
+          Fixed fw -> uiSizeToCellWidth uiSize (Fixed fw)  -- Use fixed width
+        remainingWidths = case width cell of
+          Fill -> tail remainingFillWidths  -- Consume one fill width
+          _    -> remainingFillWidths       -- Keep fill widths unchanged
+        cellText = cellToText (const cellWidth) cell
+    in  (accText ++ [cellText], remainingWidths)
+
+createColumnsRow :: UiSize -> [PrintableCell] -> Int -> Text
+createColumnsRow uiSize cells indentWidth =
   let indent    = T.replicate indentWidth $ T.pack " "
-      rowAsText = map cellToText cells
+      rowAsText = map (cellToText $ uiSizeToCellWidth uiSize . width) cells
   in  indent <> T.intercalate indent rowAsText
 
-cellToText :: PrintableCell -> Text
-cellToText x =
-  let justifyFn = case textAlign x of
+-- todo: somewhere we should use fill value to fill the space..
+cellToText :: (PrintableCell -> Int) -> PrintableCell -> Text
+cellToText getWidth cell =
+  let justifyFn = case textAlign cell of
         LeftAlign  -> justifyLeft
         RightAlign -> justifyRight
       justifyText text len = ellipsisText len $ justifyFn len ' ' text
-  in  justifyText (content x) (maxLength x)
+  in  justifyText (content cell) (getWidth cell)
+  -- in  justifyText (content cell) (uiSizeToCellWidth uiSize (width cell))
+
 
 ellipsisText :: Int -> Text -> Text
 ellipsisText len content = if T.length content > len
@@ -206,3 +262,16 @@ textToLine x = x <> T.singleton '\n'
 
 calcMaxLength :: [Text] -> Int
 calcMaxLength = maximum . map T.length
+
+calcFillWidths :: UiSize -> Int -> [PrintableCell] -> [Int]
+calcFillWidths uiSize termWidth cells =
+  let fixedWidth     = sum $ map (uiSizeToCellWidth uiSize . width) cells
+      fillCells      = filter (isFill . width) cells
+      numOfFillCells = length fillCells
+      remainingWidth = termWidth - fixedWidth
+      baseWidth      = remainingWidth `div` numOfFillCells
+      extraWidth     = remainingWidth `mod` numOfFillCells
+  in  case fillCells of
+        [] -> []
+        (firstCell : restCells) ->
+          (baseWidth + extraWidth) : replicate (length restCells) baseWidth

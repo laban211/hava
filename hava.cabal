@@ -37,6 +37,7 @@ library
       Types.Transaction.TransactionDividend
       Types.Transaction.TransactionProfitYielding
       Types.Transaction.TransactionSplit
+      Types.UiSize
       Types.UtilTypes
       Util
   other-modules:
@@ -52,6 +53,7 @@ library
     , hspec
     , split
     , stringsearch
+    , terminal-size
     , text
     , time
     , utf8-string
@@ -75,6 +77,7 @@ executable hava-exe
     , hspec
     , split
     , stringsearch
+    , terminal-size
     , text
     , time
     , utf8-string
@@ -100,6 +103,7 @@ test-suite hava-test
     , hspec
     , split
     , stringsearch
+    , terminal-size
     , text
     , time
     , utf8-string
