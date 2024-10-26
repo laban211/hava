@@ -24,6 +24,9 @@ source-repository head
 
 library
   exposed-modules:
+      Main
+      Tables.BuySellTable
+      Tables.GroupByCompanyTable
       Calc
       CLIHelp
       ParseHelper
@@ -43,6 +46,7 @@ library
   other-modules:
       Paths_hava
   hs-source-dirs:
+      app
       src
   build-depends:
       base >=4.7 && <5
@@ -91,6 +95,7 @@ test-suite hava-test
   main-is: Spec.hs
   other-modules:
       CalcSpec
+      TablesSpec
       Paths_hava
   hs-source-dirs:
       test
