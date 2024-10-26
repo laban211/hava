@@ -1,9 +1,10 @@
 {-# OPTIONS_GHC -Wno-missing-fields #-}
 module PrettyPrint
-  ( createBuySellTable
-  , createGroupByCompanyTable
-  , createTableRow
+  ( createTableRow
   , createColumnsRow
+  , createPrettyTable
+  , intToText
+  , moneyToText
   ) where
 
 import           Calc                           ( calcNumBought
@@ -111,102 +112,6 @@ createCellWidthsPx uiSize cellWidths fillWidths =
           Fill -> tail remainingFillWidths  -- Consume one fill width
           _    -> remainingFillWidths       -- Keep fill widths unchanged
     in  (accWidths ++ [w], remainingWidths)
-
-
--- Buy / sell
-
-createBuySellTable :: UiSize -> Int -> [TransactionBuySell] -> Text
-createBuySellTable uiSize termWidth rows = createPrettyTable uiSize
-                                                             termWidth
-                                                             header
-                                                             content
-                                                             spacing
- where
-  header = printableBuySellHeader
-  mapContent row = printableAllBuySellContent row header
-  content = map mapContent rows
-  spacing = map width printableBuySellHeader
-
-printableBuySellHeader :: [PrintableCell]
-printableBuySellHeader =
-  [ createFixedCell "Datum" FixedWidth { s = 11, l = Nothing } LeftAlign
-  , createFilledCell "Värdepapper" LeftAlign
-  , createFixedCell "Typ"      FixedWidth { s = 10, l = Nothing } LeftAlign
-  , createFixedCell "Antal"    FixedWidth { s = 10, l = Nothing } RightAlign
-  , createFixedCell "Kurs"     FixedWidth { s = 10, l = Nothing } RightAlign
-  , createFixedCell "Belopp"   FixedWidth { s = 10, l = Nothing } RightAlign
-  , createFixedCell "Courtage" FixedWidth { s = 10, l = Nothing } RightAlign
-  ]
-
-
-printableAllBuySellContent
-  :: TransactionBuySell -> [PrintableCell] -> [PrintableCell]
-printableAllBuySellContent transaction = zipWith
-  (\content headerCell ->
-    createCellFromText content (width headerCell) (textAlign headerCell)
-  )
-  [ getDate transaction
-  , getCompany transaction
-  , T.pack (show $ getAction transaction)
-  , T.pack (show $ getQuantity transaction)
-  , T.pack (show $ getRate transaction)
-  , T.pack (show $ getAmount transaction)
-  , T.pack (show $ getCourtage transaction)
-  ]
-
--- Group by company
-
-createGroupByCompanyTable
-  :: UiSize -> Int -> [SortedByDateList ParsedTransaction] -> Text
-createGroupByCompanyTable uiSize termWidth rows = createPrettyTable uiSize
-                                                                    termWidth
-                                                                    header
-                                                                    content
-                                                                    spacing
- where
-  header = groupByCompanyHeader
-  mapContent row = groupByCompanyContent row header
-  content = map mapContent rows
-  spacing = map width header
-
--- | Företag | Köpt | Sålt | Nuv. balans | Vinst (kr) | Vinst sålda (kr) |
-groupByCompanyHeader :: [PrintableCell]
-groupByCompanyHeader =
-  [ createFilledCell "Företag" LeftAlign
-  , createFixedCell "Köpt"        FixedWidth { s = 10, l = Just 10 } RightAlign
-  , createFixedCell "Sålt"        FixedWidth { s = 10, l = Just 10 } RightAlign
-  , createFixedCell "Nuv. balans" FixedWidth { s = 10, l = Just 12 } RightAlign
-  , createFixedCell "Vinst (kr)"  FixedWidth { s = 10, l = Just 12 } RightAlign
-  , createFixedCell "Utdelning (kr)"
-                    FixedWidth { s = 10, l = Just 14 }
-                    RightAlign
-  , createFixedCell "Vinst sålda (kr)"
-                    FixedWidth { s = 15, l = Just 17 }
-                    RightAlign
-  ]
-
-groupByCompanyContent
-  :: SortedByDateList ParsedTransaction -> [PrintableCell] -> [PrintableCell]
-groupByCompanyContent rows header =
-  let company =
-        getCompany . extractGenericTransaction . head $ getSortedByDateList rows
-      buySellRows  = extractBuySellRows rows
-      dividendRows = extractDividendRows rows
-      tableRows =
-        [ company
-        , intToText . calcNumBought $ buySellRows
-        , intToText . calcNumSold $ buySellRows
-        , intToText . calcRemainingAmount $ getSortedByDateList rows
-        , moneyToText . calcTotalBuySellProfit $ buySellRows
-        , moneyToText . calcTotalDividendProfit $ dividendRows
-        , moneyToText . calcTotalProfitForCompany $ rows
-        ]
-  in  zipWith
-        (\title headerCell ->
-          createCellFromText title (width headerCell) (textAlign headerCell)
-        )
-        tableRows
-        header
 
 intToText :: Int -> Text
 intToText = T.pack . show

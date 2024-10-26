@@ -31,7 +31,9 @@ import           Data.Tuple                     ( fst
 import qualified Data.Vector                   as V
 import           ParseHelper                    ( processData )
 import qualified PrettyPrint                   as PP
-import           System.Environment
+import           System.Environment             ( getArgs )
+import           Tables.BuySellTable            ( createBuySellTable )
+import           Tables.GroupByCompanyTable     ( createGroupByCompanyTable )
 import           Types.CLITypes                 ( CommandLineOption(..) )
 import           Types.Transaction.GenericTransaction
                                                 ( Transaction )
@@ -81,9 +83,9 @@ printBuySellHistory filePath = do
   let uiSize  = calcUiSize termWidth
   let buySell = sortByDate $ filterBuySell rows
   -- todo: not sure if default width 0 is a good idea
-  let printContent = PP.createBuySellTable uiSize
-                                           (fromMaybe 0 termWidth)
-                                           (getSortedByDateList buySell)
+  let printContent = createBuySellTable uiSize
+                                        (fromMaybe 0 termWidth)
+                                        (getSortedByDateList buySell)
 
   T.putStr printContent
 
@@ -94,10 +96,9 @@ printGroupByComany filePath = do
   let uiSize            = calcUiSize termWidth
   let paredTransactions = mapMaybeParsedTransaction rows
   let groupedByCompany  = groupByCompanySorted paredTransactions
-  let printContent = PP.createGroupByCompanyTable
-        uiSize
-        (fromMaybe 0 termWidth)
-        (Map.elems groupedByCompany)
+  let printContent = createGroupByCompanyTable uiSize
+                                               (fromMaybe 0 termWidth)
+                                               (Map.elems groupedByCompany)
 
   T.putStr printContent
 

@@ -63,6 +63,8 @@ library
 executable hava-exe
   main-is: Main.hs
   other-modules:
+      Tables.BuySellTable
+      Tables.GroupByCompanyTable
       Paths_hava
   hs-source-dirs:
       app
