@@ -129,13 +129,13 @@ createBuySellTable uiSize termWidth rows = createPrettyTable uiSize
 
 printableBuySellHeader :: [PrintableCell]
 printableBuySellHeader =
-  [ createFixedCell "Datum"       FixedWidth { s = 11 } LeftAlign
-  , createFixedCell "Värdepapper" FixedWidth { s = 30 } LeftAlign
-  , createFixedCell "Typ"         FixedWidth { s = 10 } LeftAlign
-  , createFixedCell "Antal"       FixedWidth { s = 10 } RightAlign
-  , createFixedCell "Kurs"        FixedWidth { s = 10 } RightAlign
-  , createFixedCell "Belopp"      FixedWidth { s = 10 } RightAlign
-  , createFixedCell "Courtage"    FixedWidth { s = 10 } RightAlign
+  [ createFixedCell "Datum"       FixedWidth { s = 11, l = Nothing } LeftAlign
+  , createFixedCell "Värdepapper" FixedWidth { s = 30, l = Nothing } LeftAlign
+  , createFixedCell "Typ"         FixedWidth { s = 10, l = Nothing } LeftAlign
+  , createFixedCell "Antal"       FixedWidth { s = 10, l = Nothing } RightAlign
+  , createFixedCell "Kurs"        FixedWidth { s = 10, l = Nothing } RightAlign
+  , createFixedCell "Belopp"      FixedWidth { s = 10, l = Nothing } RightAlign
+  , createFixedCell "Courtage"    FixedWidth { s = 10, l = Nothing } RightAlign
   ]
 
 
