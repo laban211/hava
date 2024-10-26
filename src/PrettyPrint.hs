@@ -86,16 +86,31 @@ createPrettyTable
   -> [CellWidth]
   -> Text
 createPrettyTable uiSize termWidth header content spacing =
-  let sep = textToLine $ createHorizontalSeperator $ map
-        (uiSizeToCellWidth uiSize)
-        spacing
-      fillWidths                = calcFillWidths uiSize termWidth header
+  let fillWidths = calcFillWidths uiSize termWidth header
       createTableRowAppliedSize = createTableRow uiSize fillWidths
+      sep = textToLine $ createHorizontalSeperator $ createCellWidthsPx
+        uiSize
+        spacing
+        fillWidths
   in  sep
         <> (textToLine . createTableRowAppliedSize $ header)
         <> sep
         <> T.unlines (map createTableRowAppliedSize content)
         <> sep
+
+createCellWidthsPx :: UiSize -> [CellWidth] -> [Int] -> [Int]
+createCellWidthsPx uiSize cellWidths fillWidths =
+  let (widths, _) = foldl' processCell ([], fillWidths) cellWidths in widths
+ where
+  processCell :: ([Int], [Int]) -> CellWidth -> ([Int], [Int])
+  processCell (accWidths, remainingFillWidths) cellWidth =
+    let w = case cellWidth of
+          Fill     -> head remainingFillWidths  -- Use the first available fill width
+          Fixed fw -> uiSizeToCellWidth uiSize (Fixed fw)  -- Use fixed width
+        remainingWidths = case cellWidth of
+          Fill -> tail remainingFillWidths  -- Consume one fill width
+          _    -> remainingFillWidths       -- Keep fill widths unchanged
+    in  (accWidths ++ [w], remainingWidths)
 
 
 -- Buy / sell
@@ -203,21 +218,15 @@ moneyToText = T.pack . printf "%.2f" . unMoney
 
 -- General utility functions
 
-{- createTableRow :: UiSize -> Int -> [PrintableCell] -> Text
-createTableRow uiSize termWidth cells =
-  let sep       = T.pack "|"
-      rowAsText = map (cellToText uiSize) cells
-  in  sep <> T.intercalate sep rowAsText <> sep -}
-
 createTableRow :: UiSize -> [Int] -> [PrintableCell] -> Text
 createTableRow uiSize fillWidths cells =
   let sep            = T.pack "|"
-      (rowAsText, _) = foldl' processCell ([], fillWidths) cells
-  in  sep <> T.intercalate sep rowAsText <> sep
+      (textCells, _) = foldl' processCell ([], fillWidths) cells
+  in  sep <> T.intercalate sep textCells <> sep
 
  where
   processCell :: ([Text], [Int]) -> PrintableCell -> ([Text], [Int])
-  processCell (accText, remainingFillWidths) cell =
+  processCell (accCellTexts, remainingFillWidths) cell =
     let cellWidth = case width cell of
           Fill     -> head remainingFillWidths  -- Use the first available fill width
           Fixed fw -> uiSizeToCellWidth uiSize (Fixed fw)  -- Use fixed width
@@ -225,7 +234,7 @@ createTableRow uiSize fillWidths cells =
           Fill -> tail remainingFillWidths  -- Consume one fill width
           _    -> remainingFillWidths       -- Keep fill widths unchanged
         cellText = cellToText (const cellWidth) cell
-    in  (accText ++ [cellText], remainingWidths)
+    in  (accCellTexts ++ [cellText], remainingWidths)
 
 createColumnsRow :: UiSize -> [PrintableCell] -> Int -> Text
 createColumnsRow uiSize cells indentWidth =
@@ -233,7 +242,6 @@ createColumnsRow uiSize cells indentWidth =
       rowAsText = map (cellToText $ uiSizeToCellWidth uiSize . width) cells
   in  indent <> T.intercalate indent rowAsText
 
--- todo: somewhere we should use fill value to fill the space..
 cellToText :: (PrintableCell -> Int) -> PrintableCell -> Text
 cellToText getWidth cell =
   let justifyFn = case textAlign cell of
@@ -241,14 +249,11 @@ cellToText getWidth cell =
         RightAlign -> justifyRight
       justifyText text len = ellipsisText len $ justifyFn len ' ' text
   in  justifyText (content cell) (getWidth cell)
-  -- in  justifyText (content cell) (uiSizeToCellWidth uiSize (width cell))
-
 
 ellipsisText :: Int -> Text -> Text
 ellipsisText len content = if T.length content > len
   then T.take (len - 1) content <> T.singleton '…'
   else content
-
 
 createHorizontalSeperator :: [Int] -> Text
 createHorizontalSeperator x = sep <> foldl' joinText (T.pack "") x
