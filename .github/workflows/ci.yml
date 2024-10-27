@@ -17,7 +17,7 @@ jobs:
       - name: Set up Haskell
         uses: haskell/actions/setup@v1
         with:
-          ghc-version: "9.2.5" # specify the GHC version you're using
+          ghc-version: "8.10.4"
           stack-version: "latest"
 
       - name: Build and test with Stack
