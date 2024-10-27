@@ -9,8 +9,6 @@ module Calc
     , calcRemainingAmount
     , calcSellProfit
     , calcTotalDividendProfit
-    , extractBuySellRows
-    , extractDividendRows
     ) where
 
 import           Control.Exception              ( ArithException(DivideByZero)

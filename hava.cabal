@@ -24,6 +24,9 @@ source-repository head
 
 library
   exposed-modules:
+      Main
+      Tables.BuySellTable
+      Tables.GroupByCompanyTable
       Calc
       CLIHelp
       ParseHelper
@@ -37,11 +40,13 @@ library
       Types.Transaction.TransactionDividend
       Types.Transaction.TransactionProfitYielding
       Types.Transaction.TransactionSplit
+      Types.UiSize
       Types.UtilTypes
       Util
   other-modules:
       Paths_hava
   hs-source-dirs:
+      app
       src
   build-depends:
       base >=4.7 && <5
@@ -52,6 +57,7 @@ library
     , hspec
     , split
     , stringsearch
+    , terminal-size
     , text
     , time
     , utf8-string
@@ -61,6 +67,8 @@ library
 executable hava-exe
   main-is: Main.hs
   other-modules:
+      Tables.BuySellTable
+      Tables.GroupByCompanyTable
       Paths_hava
   hs-source-dirs:
       app
@@ -75,6 +83,7 @@ executable hava-exe
     , hspec
     , split
     , stringsearch
+    , terminal-size
     , text
     , time
     , utf8-string
@@ -86,6 +95,7 @@ test-suite hava-test
   main-is: Spec.hs
   other-modules:
       CalcSpec
+      TablesSpec
       Paths_hava
   hs-source-dirs:
       test
@@ -100,6 +110,7 @@ test-suite hava-test
     , hspec
     , split
     , stringsearch
+    , terminal-size
     , text
     , time
     , utf8-string

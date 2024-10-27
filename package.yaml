@@ -31,9 +31,12 @@ dependencies:
   - containers
   - time
   - hspec
+  - terminal-size
 
 library:
-  source-dirs: src
+  source-dirs:
+    - app
+    - src
 
 executables:
   hava-exe:

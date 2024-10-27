@@ -1,6 +1,9 @@
 module Main where
 
-import           CLIHelp                        ( printHelp )
+import           CLIHelp                        ( getAdjustedTerminalWidth
+                                                , getUiSizeBasedOnTerminalWidth
+                                                , printHelp
+                                                )
 import           Calc                           ( filterBuySell
                                                 , filterProfitYieldingRows
                                                 , groupByCompanySorted
@@ -19,6 +22,7 @@ import           Data.List                      ( find
                                                 , unlines
                                                 )
 import qualified Data.Map                      as Map
+import           Data.Maybe                     ( fromMaybe )
 import qualified Data.Text                     as T
 import qualified Data.Text.IO                  as T
 import           Data.Tuple                     ( fst
@@ -27,12 +31,15 @@ import           Data.Tuple                     ( fst
 import qualified Data.Vector                   as V
 import           ParseHelper                    ( processData )
 import qualified PrettyPrint                   as PP
-import           System.Environment
+import           System.Environment             ( getArgs )
+import           Tables.BuySellTable            ( createBuySellTable )
+import           Tables.GroupByCompanyTable     ( createGroupByCompanyTable )
 import           Types.CLITypes                 ( CommandLineOption(..) )
 import           Types.Transaction.GenericTransaction
                                                 ( Transaction )
 import           Types.Transaction.ParsedTransaction
                                                 ( mapMaybeParsedTransaction )
+import           Types.UiSize                   ( calcUiSize )
 import           Types.UtilTypes                ( SortedByDateList(..) )
 import           Util                           ( SortableByDate(..) )
 
@@ -71,18 +78,27 @@ handleArg (flag : filePath : _) =
 
 printBuySellHistory :: FilePath -> IO ()
 printBuySellHistory filePath = do
-  rows <- readCsv filePath
-  let buySell      = sortByDate $ filterBuySell rows
-  let printContent = PP.createBuySellTable $ getSortedByDateList buySell
+  rows      <- readCsv filePath
+  termWidth <- getAdjustedTerminalWidth
+  let uiSize  = calcUiSize termWidth
+  let buySell = sortByDate $ filterBuySell rows
+  -- todo: not sure if default width 0 is a good idea
+  let printContent = createBuySellTable uiSize
+                                        (fromMaybe 0 termWidth)
+                                        (getSortedByDateList buySell)
 
   T.putStr printContent
 
 printGroupByComany :: FilePath -> IO ()
 printGroupByComany filePath = do
-  rows <- readCsv filePath
+  rows      <- readCsv filePath
+  termWidth <- getAdjustedTerminalWidth
+  let uiSize            = calcUiSize termWidth
   let paredTransactions = mapMaybeParsedTransaction rows
   let groupedByCompany  = groupByCompanySorted paredTransactions
-  let printContent = PP.createGroupByCompanyTable (Map.elems groupedByCompany)
+  let printContent = createGroupByCompanyTable uiSize
+                                               (fromMaybe 0 termWidth)
+                                               (Map.elems groupedByCompany)
 
   T.putStr printContent
 

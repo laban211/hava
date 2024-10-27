@@ -4,7 +4,11 @@ module CalcSpec
 
 import qualified Calc                          as C
 import qualified Data.Text                     as T
-import           Test.Hspec
+import           Test.Hspec                     ( Spec
+                                                , describe
+                                                , it
+                                                , shouldBe
+                                                )
 import           Types.Money                    ( Money )
 import           Types.Transaction.GenericTransaction
                                                 ( GenericTransaction(..) )
