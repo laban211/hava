@@ -29,7 +29,7 @@ import           Data.Tuple                     ( fst
                                                 , snd
                                                 )
 import qualified Data.Vector                   as V
-import           ParseHelper                    ( processData )
+import           Parse                    ( parseCsvData )
 import qualified PrettyPrint                   as PP
 import           System.Environment             ( getArgs )
 import           Tables.BuySellTable            ( createBuySellTable )
@@ -105,5 +105,5 @@ printGroupByComany filePath = do
 readCsv :: FilePath -> IO [Transaction]
 readCsv filePath = do
   csvData <- BSL.readFile filePath
-  let rows = processData csvData
+  let rows = parseCsvData csvData
   return rows

@@ -35,7 +35,6 @@ import qualified Data.Text                     as T
                                                 )
 import           Debug.Trace                    ( trace )
 import           GHC.Base                       ( join )
-import           ParseHelper                    ( printableMoney )
 import           Prelude
 import           Text.Printf                    ( printf )
 import           Types.Money                    ( Money(unMoney) )
