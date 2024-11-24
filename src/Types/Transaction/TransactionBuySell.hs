@@ -1,5 +1,5 @@
+{-# LANGUAGE FlexibleInstances    #-}
 {-# LANGUAGE TypeSynonymInstances #-}
-{-# LANGUAGE FlexibleInstances #-}
 module Types.Transaction.TransactionBuySell
     ( TransactionBuySell(..)
     , Action(..)
@@ -7,17 +7,13 @@ module Types.Transaction.TransactionBuySell
     , isBuy
     , isSell
     ) where
-import qualified Data.Text                     as T
-import           Types.Money                    ( Money )
-import           Types.Transaction.GenericTransaction
-                                                ( GenericTransaction(..)
-                                                , Transaction(..)
-                                                )
-import           Types.UtilTypes                ( parseInt
-                                                , parseMoney
-                                                , parseMoneyDefault0
-                                                )
-import           Util                           ( SortableByDate(..) )
+import qualified Data.Text                            as T
+import           Types.Money                          (Money)
+import           Types.Transaction.GenericTransaction (GenericTransaction (..),
+                                                       Transaction (..))
+import           Types.UtilTypes                      (parseInt, parseMoney,
+                                                       parseMoneyDefault0)
+import           Util                                 (SortableByDate (..))
 
 type TransactionBuySell = GenericTransaction Action Int Money
 

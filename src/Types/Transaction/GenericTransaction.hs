@@ -10,10 +10,7 @@ module Types.Transaction.GenericTransaction
     , getCourtage
     ) where
 
-import           Data.Text                     as T
-                                                ( Text
-                                                , pack
-                                                )
+import           Data.Text as T (Text, pack)
 
 data GenericTransaction a b c = GenericTransaction
     { date     :: !Text
@@ -27,7 +24,7 @@ data GenericTransaction a b c = GenericTransaction
     , currency :: !Text
     , isin     :: !Text
     }
-    deriving Show
+    deriving (Show, Eq)
 
 type Transaction = GenericTransaction Text Text Text
 
