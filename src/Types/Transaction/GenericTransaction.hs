@@ -1,30 +1,31 @@
 module Types.Transaction.GenericTransaction
-    ( GenericTransaction(..)
-    , Transaction(..)
-    , getAction
-    , getDate
-    , getCompany
-    , getQuantity
-    , getRate
-    , getAmount
-    , getCourtage
-    ) where
+  ( GenericTransaction (..),
+    Transaction (..),
+    getAction,
+    getDate,
+    getCompany,
+    getQuantity,
+    getRate,
+    getAmount,
+    getCourtage,
+  )
+where
 
-import           Data.Text as T (Text, pack)
+import Data.Text as T (Text, pack)
 
 data GenericTransaction a b c = GenericTransaction
-    { date     :: !Text
-    , account  :: !Text
-    , action   :: !a
-    , company  :: !Text
-    , quantity :: !b
-    , rate     :: !c
-    , amount   :: !c
-    , courtage :: !c
-    , currency :: !Text
-    , isin     :: !Text
-    }
-    deriving (Show, Eq)
+  { date :: !Text,
+    account :: !Text,
+    action :: !a,
+    company :: !Text,
+    quantity :: !b,
+    rate :: !c,
+    amount :: !c,
+    courtage :: !c,
+    currency :: !Text,
+    isin :: !Text
+  }
+  deriving (Show, Eq)
 
 type Transaction = GenericTransaction Text Text Text
 
@@ -48,4 +49,3 @@ getAmount = amount
 
 getCourtage :: GenericTransaction a b c -> c
 getCourtage = courtage
-
