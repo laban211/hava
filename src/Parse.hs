@@ -59,7 +59,7 @@ instance FromNamedRecord Transaction where
       .:  "Belopp"
       -- trans valuta
       <*> r
-      .:  "Courtage (SEK)" -- add sek
+      .:  "Courtage (SEK)"
       -- valuta-kurs
       <*> r
       .:  "Instrumentvaluta"
