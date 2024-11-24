@@ -1,10 +1,11 @@
 module Types.CLITypes
-    ( CommandLineOption(..)
-    ) where
+  ( CommandLineOption (..),
+  )
+where
 
 data CommandLineOption = CommandLineOption
-    { longArg     :: String
-    , shortArg    :: String
-    , description :: String
-    , action      :: FilePath -> IO ()
-    }
+  { longArg :: String,
+    shortArg :: String,
+    description :: String,
+    action :: FilePath -> IO ()
+  }

@@ -1,50 +1,50 @@
-{-# LANGUAGE TypeFamilies #-}
-{-# LANGUAGE MultiParamTypeClasses #-}
-{-# LANGUAGE FunctionalDependencies #-}
 {-# LANGUAGE ExistentialQuantification #-}
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE TypeFamilies #-}
 
 module Types.UtilTypes
-  ( parseInt
-  , parseDouble
-  , parseMoney
-  , parseMoneyDefault0
-  , SortedByDateList(..)
-  ) where
+  ( parseInt,
+    parseDouble,
+    parseMoney,
+    parseMoneyDefault0,
+    SortedByDateList (..),
+  )
+where
 
-import           Data.Text                      ( Text )
-import qualified Data.Text                     as T
-import qualified Data.Text.Read                as TR
-import           GHC.Exts                       ( IsList(..) )
-import           Prelude
-import           Types.Money                    ( Money(Money) )
+import Data.Text (Text)
+import qualified Data.Text as T
+import qualified Data.Text.Read as TR
+import GHC.Exts (IsList (..))
+import Types.Money (Money (Money))
+import Prelude
 
 -- todo: not sure where to put these
 parseInt :: Text -> Maybe Int
 parseInt t = case TR.signed TR.decimal t of
   Right (n, _) -> Just n
-  _            -> Nothing
+  _ -> Nothing
 
 parseDouble :: Text -> Maybe Double
 parseDouble t = case TR.double t of
   Right (d, _) -> Just d
-  _            -> Nothing
+  _ -> Nothing
 
 parseMoney :: Text -> Maybe Money
 parseMoney t = case parseDouble t of
-  Just d  -> Just $ Money d
+  Just d -> Just $ Money d
   Nothing -> Nothing
 
 parseMoneyDefault0 :: Text -> Money
 parseMoneyDefault0 t = case parseMoney t of
-  Just m  -> m
+  Just m -> m
   Nothing -> Money 0.0
 
-newtype SortedByDateList a = SortedByDateList{ getSortedByDateList :: [a] }
+newtype SortedByDateList a = SortedByDateList {getSortedByDateList :: [a]}
   deriving (Show, Eq, Ord, Functor, Foldable)
 
 instance IsList (SortedByDateList a) where
   type Item (SortedByDateList a) = a
   fromList = SortedByDateList
-  toList   = getSortedByDateList
+  toList = getSortedByDateList
