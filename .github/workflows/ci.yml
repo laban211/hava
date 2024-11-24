@@ -20,18 +20,22 @@ jobs:
           ghc-version: "9.4.8"
           stack-version: "latest"
 
-      - name: Install ormolu and hlint
+      - name: "Set up HLint"
+        uses: haskell-actions/hlint-setup@v2
+
+      - name: "Run HLint"
+        uses: haskell-actions/hlint-run@v2
+        with:
+          path: .
+          fail-on: warning
+
+      - name: Install ormolu
         run: |
           stack install ormolu
-          stack install hlint
 
       - name: Check formatting with ormolu
         run: |
           ormolu --mode check $(find . -name '*.hs')
-
-      - name: Run linting with hlint
-        run: |
-          hlint .
 
       - name: Build and test with Stack
         run: |

@@ -77,15 +77,6 @@ instance FromNamedRecord Transaction where
 
 -- resultat
 
-instance FromField Money where
-  parseField s = parseMoney s
-
-parseMoney :: Field -> Parser Money
-parseMoney x = pure . read . BSL.unpack $ BS.replace comma dot x
-  where
-    comma = BS.pack ","
-    dot = BS.pack "."
-
 parseCsvData :: ByteString.ByteString -> [Transaction]
 parseCsvData csvData = case decodeByNameWith decOptions (dropBOM csvData) of
   Left err -> error err

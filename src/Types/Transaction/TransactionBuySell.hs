@@ -1,5 +1,4 @@
 {-# LANGUAGE FlexibleInstances #-}
-{-# LANGUAGE TypeSynonymInstances #-}
 
 module Types.Transaction.TransactionBuySell
   ( TransactionBuySell (..),
