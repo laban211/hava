@@ -9,14 +9,6 @@ module PrettyPrint
   )
 where
 
-import Calc
-  ( calcNumBought,
-    calcNumSold,
-    calcRemainingAmount,
-    calcTotalBuySellProfit,
-    calcTotalDividendProfit,
-    calcTotalProfitForCompany,
-  )
 import Data.Function ((&))
 import Data.List (foldl')
 import Data.Maybe (fromMaybe)
