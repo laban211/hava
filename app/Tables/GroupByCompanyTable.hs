@@ -50,17 +50,16 @@ import Types.UtilTypes
 createGroupByCompanyTable ::
   UiSize -> Int -> [SortedByDateList ParsedTransaction] -> Text
 createGroupByCompanyTable uiSize termWidth rows =
-  createPrettyTable
-    uiSize
-    termWidth
-    header
-    content
-    spacing
-  where
-    header = groupByCompanyHeader
-    mapContent row = groupByCompanyContent row header
-    content = map mapContent rows
-    spacing = map width header
+  let header = groupByCompanyHeader
+      mapContent row = groupByCompanyContent row header
+      content = map mapContent rows
+      spacing = map width header
+   in createPrettyTable
+        uiSize
+        termWidth
+        header
+        content
+        spacing
 
 -- | Företag | Köpt | Sålt | Nuv. balans | Vinst (kr) | Vinst sålda (kr) |
 groupByCompanyHeader :: [PrintableCell]
