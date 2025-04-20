@@ -7,5 +7,5 @@ data CommandLineOption = CommandLineOption
   { longArg :: String,
     shortArg :: String,
     description :: String,
-    action :: FilePath -> IO ()
+    action :: [String] -> FilePath -> IO ()
   }

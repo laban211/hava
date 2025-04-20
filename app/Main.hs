@@ -35,11 +35,11 @@ import Data.Tuple
     snd,
   )
 import qualified Data.Vector as V
+import Features.BuySell.BuySellTable (createBuySellTable)
+import Features.GroupByCompany.GroupByCompanyTable (createGroupByCompanyTable)
 import Parse (parseCsvData)
 import qualified PrettyPrint as PP
 import System.Environment (getArgs)
-import Tables.BuySellTable (createBuySellTable)
-import Tables.GroupByCompanyTable (createGroupByCompanyTable)
 import Types.CLITypes (CommandLineOption (..))
 import Types.Transaction.GenericTransaction
   ( Transaction,
@@ -49,7 +49,7 @@ import Types.Transaction.ParsedTransaction
   )
 import Types.UiSize (calcUiSize)
 import Types.UtilTypes (SortedByDateList (..))
-import Util (SortableByDate (..))
+import Util (SortableByDate (..), unsnoc)
 
 main :: IO ()
 main = do
@@ -70,8 +70,8 @@ mainOptions =
       printGroupByComany
   ]
 
-actionNoOp :: FilePath -> IO ()
-actionNoOp _ = return ()
+actionNoOp :: [String] -> FilePath -> IO ()
+actionNoOp _ _ = return ()
 
 helpOption :: CommandLineOption
 helpOption = CommandLineOption "--help" "-h" "Print help" actionNoOp
@@ -79,13 +79,16 @@ helpOption = CommandLineOption "--help" "-h" "Print help" actionNoOp
 handleArg :: [String] -> IO ()
 handleArg [] = putStrLn "No arguments provided, write --help for instructions"
 handleArg [flag] = printHelp (helpOption : mainOptions)
-handleArg (flag : filePath : _) =
+-- todo: extraArgs in the middle is a bit complex I guess
+handleArg (flag : args) =
   case find (\opt -> flag == longArg opt || flag == shortArg opt) mainOptions of
-    Just opt -> action opt filePath
+    Just opt -> case unsnoc args of
+      Just (extraArgs, filePath) -> action opt extraArgs filePath
+      Nothing -> error "Missing filepath"
     Nothing -> error "Unknown flag"
 
-printBuySellHistory :: FilePath -> IO ()
-printBuySellHistory filePath = do
+printBuySellHistory :: [String] -> FilePath -> IO ()
+printBuySellHistory cliFlags filePath = do
   rows <- readCsv filePath
   termWidth <- getAdjustedTerminalWidth
   let uiSize = calcUiSize termWidth
@@ -99,8 +102,8 @@ printBuySellHistory filePath = do
 
   T.putStr printContent
 
-printGroupByComany :: FilePath -> IO ()
-printGroupByComany filePath = do
+printGroupByComany :: [String] -> FilePath -> IO ()
+printGroupByComany cliFlags filePath = do
   rows <- readCsv filePath
   termWidth <- getAdjustedTerminalWidth
   let uiSize = calcUiSize termWidth
@@ -110,6 +113,7 @@ printGroupByComany filePath = do
         createGroupByCompanyTable
           uiSize
           (fromMaybe 0 termWidth)
+          cliFlags
           (Map.elems groupedByCompany)
 
   T.putStr printContent

@@ -1,6 +1,7 @@
 module Util
   ( alwaysNegative,
     SortableByDate (..),
+    unsnoc,
   )
 where
 
@@ -45,3 +46,10 @@ alwaysNegative :: (Num a, Ord a) => a -> a
 alwaysNegative x
   | x >= 0 = negate x
   | otherwise = x
+
+--- | Oposite of snoc, aka (:). Given a list, it return the rest elements at the start rather than the last element
+unsnoc :: [a] -> Maybe ([a], a)
+unsnoc [] = Nothing
+unsnoc [x] = Just ([], x)
+unsnoc [x, y] = Just ([x], y)
+unsnoc xs = Just (init xs, last xs)
