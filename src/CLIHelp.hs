@@ -25,16 +25,18 @@ import Types.UiSize
     calcUiSize,
   )
 
-printHelp :: [CommandLineOption] -> IO ()
-printHelp options = do
+printHelp :: [CommandLineOption] -> [CommandLineOption] -> IO ()
+printHelp commands options = do
   printUsage
+  T.putStrLn (T.pack "")
+  printCmdLineCommands commands
   T.putStrLn (T.pack "")
   printCmdLineOpts options
 
 usages :: [(String, String)]
 usages =
-  [ ( "hava [option] [path-to-csv-file]",
-      "Run Hava in <option>-mode for Avanza transactions file"
+  [ ( "hava [command] [path-to-csv-file]",
+      "Run Hava in <command>-mode for Avanza transactions file"
     )
   ]
 
@@ -44,10 +46,10 @@ printUsage = do
   let bMaxLen = maximum $ map (length . snd) usages
   let cells =
         [ createDefaultCell
-            "hava [option] [path-to-csv-file]"
+            "hava [command] [path-to-csv-file]"
             FixedWidth {s = aMaxLen + 3},
           createDefaultCell
-            "Run Hava in <option>-mode for Avanza transaction file"
+            "Run Hava in <command>-mode for Avanza transaction file"
             FixedWidth {s = bMaxLen}
         ]
   let printRow = PP.createColumnsRow Small cells 2
@@ -55,11 +57,24 @@ printUsage = do
   printSection "Usage"
   T.putStrLn printRow
 
+printCmdLineCommands :: [CommandLineOption] -> IO ()
+printCmdLineCommands options = do
+  let createCellWithOpts opt =
+        [ createDefaultCell
+            (longCmd opt ++ ", " ++ shortCmd opt)
+            FixedWidth {s = 27},
+          createDefaultCell (description opt) FixedWidth {s = 40}
+        ]
+  let printRow opts = PP.createColumnsRow Small (createCellWithOpts opts) 2
+
+  printSection "Commands"
+  mapM_ (T.putStrLn . printRow) options
+
 printCmdLineOpts :: [CommandLineOption] -> IO ()
 printCmdLineOpts options = do
   let createCellWithOpts opt =
         [ createDefaultCell
-            (longArg opt ++ ", " ++ shortArg opt)
+            (longCmd opt ++ ", " ++ shortCmd opt)
             FixedWidth {s = 27},
           createDefaultCell (description opt) FixedWidth {s = 40}
         ]

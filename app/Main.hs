@@ -56,16 +56,16 @@ main = do
   args <- getArgs
   handleArg args
 
-mainOptions :: [CommandLineOption]
-mainOptions =
+mainCommands :: [CommandLineOption]
+mainCommands =
   [ CommandLineOption
-      "--buy-sell"
-      "-bs"
+      "buy-sell"
+      "bs"
       "Print buy and sell transactions"
       printBuySellHistory,
     CommandLineOption
-      "--group-by-company"
-      "-gbc"
+      "group-by-company"
+      "gbc"
       "Print results grouped by company"
       printGroupByComany
   ]
@@ -78,10 +78,10 @@ helpOption = CommandLineOption "--help" "-h" "Print help" actionNoOp
 
 handleArg :: [String] -> IO ()
 handleArg [] = putStrLn "No arguments provided, write --help for instructions"
-handleArg [flag] = printHelp (helpOption : mainOptions)
+handleArg [flag] = printHelp mainCommands [helpOption]
 -- todo: extraArgs in the middle is a bit complex I guess
 handleArg (flag : args) =
-  case find (\opt -> flag == longArg opt || flag == shortArg opt) mainOptions of
+  case find (\opt -> flag == longCmd opt || flag == shortCmd opt) mainCommands of
     Just opt -> case unsnoc args of
       Just (extraArgs, filePath) -> action opt extraArgs filePath
       Nothing -> error "Missing filepath"

@@ -4,8 +4,8 @@ module Types.CLITypes
 where
 
 data CommandLineOption = CommandLineOption
-  { longArg :: String,
-    shortArg :: String,
+  { longCmd :: String,
+    shortCmd :: String,
     description :: String,
     action :: [String] -> FilePath -> IO ()
   }
