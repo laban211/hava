@@ -64,8 +64,18 @@ createGroupByCompanyTable uiSize termWidth cliFlags rows =
       let header = groupByCompanyHeader
           mapContent row = createGroupByCompanyRow row header
           groupByCompanyContentRows = map mapContent rows
+
+          -- apply cli flags
+
+          -- apply sort
           sortedRows = sortGroupByCompanyRows (sortOptions parsedCliFlags) groupByCompanyContentRows
-          content = map (groupByCompanyRowToCells header) sortedRows
+
+          -- apply limit
+          limitedRows = case limit parsedCliFlags of
+            Just n -> take n sortedRows
+            Nothing -> sortedRows
+
+          content = map (groupByCompanyRowToCells header) limitedRows
           spacing = map width header
        in createPrettyTable
             uiSize

@@ -5,28 +5,44 @@ import Data.List (intercalate)
 import qualified Data.Map as Map
 import qualified Data.Text as T
 import Features.GroupByCompany.GroupByCompanyTypes
+import Text.Read (readMaybe)
 import Types.Table.SortOption (SortOption (..), SortOrder (..), allSortKeys, parseOrder)
 
 data ParsedGroupBuySellCliFlags = ParsedGroupBuySellCliFlags
-  { sortOptions :: !GroupByCompanySortOption
-  -- Add more later
+  { sortOptions :: !GroupByCompanySortOption,
+    limit :: !(Maybe Int)
   }
+
+defaultFlags :: ParsedGroupBuySellCliFlags
+defaultFlags =
+  ParsedGroupBuySellCliFlags
+    { sortOptions = defaultGroupByCompanySortOption,
+      limit = Nothing
+    }
 
 defaultGroupByCompanySortOption :: GroupByCompanySortOption
 defaultGroupByCompanySortOption = GroupByCompanySortOption (SortOption Company Descending)
 
 parseCliFlags :: [String] -> Either String ParsedGroupBuySellCliFlags
-parseCliFlags args = go args defaultGroupByCompanySortOption
+parseCliFlags args = go args defaultFlags
   where
-    go [] sortOpt = Right $ ParsedGroupBuySellCliFlags sortOpt
-    go ("--sort" : col : ord : rest) _ =
+    go [] acc = Right acc
+    go ("--sort" : col : ord : rest) acc =
       case parseGroupByCompanySortOpts (col ++ " " ++ ord) of
-        Right opt -> go rest opt
+        Right opt -> go rest acc {sortOptions = opt}
         Left err -> Left $ "Failed to parse --sort flag: " ++ err
-    go ("--sort" : col : rest) _ =
+    go ("--sort" : col : rest) acc =
       case parseGroupByCompanySortOpts col of
-        Right opt -> go rest opt
+        Right opt -> go rest acc {sortOptions = opt}
         Left err -> Left $ "Failed to parse --sort flag: " ++ err
+    go ("--limit" : num : rest) acc =
+      case parseLimit num of
+        Just opt -> go rest acc {limit = Just opt}
+        Nothing ->
+          Left $
+            "Failed to parse --limit flag due to invalid value: \""
+              ++ num
+              ++ "\". Expected an integear larger than 1"
 
 parseGroupByCompanySortOpts :: String -> Either String GroupByCompanySortOption
 parseGroupByCompanySortOpts input =
@@ -63,6 +79,11 @@ parseGroupByCompanySortOpts input =
         )
         Right
         (parseOrder ord)
+
+parseLimit :: String -> Maybe Int
+parseLimit str = do
+  n <- readMaybe str
+  if n > 0 then Just n else Nothing
 
 sortableColumnMap :: Map.Map String SortableColumn
 sortableColumnMap =
