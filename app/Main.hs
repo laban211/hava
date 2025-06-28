@@ -36,7 +36,10 @@ import Data.Tuple
   )
 import qualified Data.Vector as V
 import Features.BuySell.BuySellTable (createBuySellTable)
+import Features.GroupByCompany.GroupByCompanyArgParse (sortableColumnToStr)
+import qualified Features.GroupByCompany.GroupByCompanyArgParse as GbcArgParse
 import Features.GroupByCompany.GroupByCompanyTable (createGroupByCompanyTable)
+import qualified Features.GroupByCompany.GroupByCompanyTypes as GBC
 import Parse (parseCsvData)
 import qualified PrettyPrint as PP
 import System.Environment (getArgs)
@@ -69,13 +72,25 @@ mainCommands =
       "gbc"
       "Print results grouped by company"
       [ FlagDoc
-          { flag = "--sort",
-            flagDescription = "sorting...",
-            defaultValue = "name or something"
+          { flag = "--sort <column> [asc|desc] ",
+            flagDescriptionRows =
+              [ "Sort table by column (default: asc)",
+                -- table order
+                -- Företag, Köpt, Sålt, Nuv. balans, Vinst (kr), Utdelning (kr), Vinst sålda (kr)
+                "Columns: " ++ createGbcSortOpts [GBC.Company, GBC.Bought, GBC.Sold] ++ ",",
+                "         " ++ createGbcSortOpts [GBC.CurrentAmount, GBC.Profit] ++ ",",
+                "         " ++ createGbcSortOpts [GBC.Dividend, GBC.ProfitForSold]
+              ]
+          },
+        FlagDoc
+          { flag = "--limit <number>",
+            flagDescriptionRows = ["Limit number of rows (must be > 1)"]
           }
       ]
       printGroupByComany
   ]
+  where
+    createGbcSortOpts xs = List.intercalate ", " (map sortableColumnToStr xs)
 
 actionNoOp :: [String] -> FilePath -> IO ()
 actionNoOp _ _ = return ()

@@ -8,11 +8,11 @@ data SortableColumn
   = Company
   | Bought
   | Sold
-  | CurrentAmmount
+  | CurrentAmount
   | Profit
   | Dividend
   | ProfitForSold
-  deriving (Show, Read, Enum, Bounded)
+  deriving (Show, Read, Enum, Bounded, Eq, Ord)
 
 newtype GroupByCompanySortOption = GroupByCompanySortOption {unGroupByCompanySortOption :: SortOption SortableColumn}
 

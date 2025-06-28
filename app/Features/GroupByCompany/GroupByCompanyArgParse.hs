@@ -1,4 +1,4 @@
-module Features.GroupByCompany.GroupByCompanyArgParse (ParsedGroupBuySellCliFlags (..), parseCliFlags, defaultGroupByCompanySortOption) where
+module Features.GroupByCompany.GroupByCompanyArgParse (ParsedGroupBuySellCliFlags (..), parseCliFlags, defaultGroupByCompanySortOption, allSortableColumnsKeys, sortableColumnToStr) where
 
 import Data.Char (toLower)
 import Data.List (intercalate)
@@ -85,18 +85,31 @@ parseLimit str = do
   n <- readMaybe str
   if n > 0 then Just n else Nothing
 
-sortableColumnMap :: Map.Map String SortableColumn
-sortableColumnMap =
-  Map.fromList
-    [ (lowercaseFirst (show col), col)
-      | col <- enumFrom minBound
-    ]
+strToSortableColumnMap :: Map.Map String SortableColumn
+strToSortableColumnMap =
+  Map.fromList $
+    map (\col -> (lowercaseFirst (show col), col)) [minBound .. maxBound]
 
 parseSortableColumnMap :: String -> Maybe SortableColumn
-parseSortableColumnMap key = Map.lookup key sortableColumnMap
+parseSortableColumnMap key = Map.lookup key strToSortableColumnMap
+
+{- sortableColumnToStr :: SortableColumn -> String
+sortableColumnToStr col = case col of
+  Company -> generatedStr
+  Bought -> generatedStr
+  Sold -> generatedStr
+  CurrentAmmount -> generatedStr
+  Profit -> generatedStr
+  Dividend -> generatedStr
+  ProfitForSold -> generatedStr
+  where
+    generatedStr = lowercaseFirst (show col) -}
+
+sortableColumnToStr :: SortableColumn -> String
+sortableColumnToStr col = lowercaseFirst (show col)
 
 allSortableColumnsKeys :: [String]
-allSortableColumnsKeys = Map.keys sortableColumnMap
+allSortableColumnsKeys = Map.keys strToSortableColumnMap
 
 lowercaseFirst :: String -> String
 lowercaseFirst [] = []

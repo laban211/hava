@@ -137,7 +137,7 @@ sortGroupByCompanyRows (GroupByCompanySortOption (SortOption column order)) rows
     Company -> applySort (compare `on` (T.toLower . company)) rows
     Bought -> applySort (compare `on` bought) rows
     Sold -> applySort (compare `on` sold) rows
-    CurrentAmmount -> applySort (compare `on` currentAmmount) rows
+    CurrentAmount -> applySort (compare `on` currentAmmount) rows
     Profit -> applySort (compare `on` profit) rows
     Dividend -> applySort (compare `on` dividence) rows
     ProfitForSold -> applySort (compare `on` profitForSold) rows

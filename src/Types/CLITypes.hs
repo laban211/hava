@@ -14,6 +14,5 @@ data CommandLineOption = CommandLineOption
 
 data FlagDoc = FlagDoc
   { flag :: String,
-    flagDescription :: String,
-    defaultValue :: String
+    flagDescriptionRows :: [String]
   }
