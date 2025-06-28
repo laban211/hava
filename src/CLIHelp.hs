@@ -14,10 +14,11 @@ import System.Console.Terminal.Size
   ( Window (..),
     size,
   )
-import Types.CLITypes (CommandLineOption (..))
+import Types.CLITypes (CommandLineOption (..), FlagDoc (..))
 import Types.PrintableCell
   ( CellWidth (..),
     FixedWidth (..),
+    PrintableCell,
     createDefaultCell,
   )
 import Types.UiSize
@@ -25,13 +26,14 @@ import Types.UiSize
     calcUiSize,
   )
 
+-- todo: separata commands and options..?
 printHelp :: [CommandLineOption] -> [CommandLineOption] -> IO ()
 printHelp commands options = do
   printUsage
   T.putStrLn (T.pack "")
-  printCmdLineCommands commands
+  printCmdLineOpts "Commands" commands
   T.putStrLn (T.pack "")
-  printCmdLineOpts options
+  printCmdLineOpts "Options" options
 
 usages :: [(String, String)]
 usages =
@@ -57,31 +59,42 @@ printUsage = do
   printSection "Usage"
   T.putStrLn printRow
 
-printCmdLineCommands :: [CommandLineOption] -> IO ()
-printCmdLineCommands options = do
-  let createCellWithOpts opt =
-        [ createDefaultCell
-            (longCmd opt ++ ", " ++ shortCmd opt)
-            FixedWidth {s = 27},
-          createDefaultCell (description opt) FixedWidth {s = 40}
-        ]
-  let printRow opts = PP.createColumnsRow Small (createCellWithOpts opts) 2
+printCmdLineOpts :: String -> [CommandLineOption] -> IO ()
+printCmdLineOpts sectionName options = do
+  let allRows = concatMap renderOption options
 
-  printSection "Commands"
-  mapM_ (T.putStrLn . printRow) options
+  printSection sectionName
+  mapM_ T.putStrLn allRows
+  where
+    -- todo: move out
+    leftPad :: Int -> Char -> String -> String
+    leftPad n c s = replicate (n - length s) c ++ s
 
-printCmdLineOpts :: [CommandLineOption] -> IO ()
-printCmdLineOpts options = do
-  let createCellWithOpts opt =
-        [ createDefaultCell
-            (longCmd opt ++ ", " ++ shortCmd opt)
-            FixedWidth {s = 27},
-          createDefaultCell (description opt) FixedWidth {s = 40}
-        ]
-  let printRow opts = PP.createColumnsRow Small (createCellWithOpts opts) 2
+    renderOption :: CommandLineOption -> [T.Text]
+    renderOption opt =
+      let mainRow = PP.createColumnsRow Small (createCmdDescCells opt) 2
+          -- todo: not sure about leftPad bellow..
+          descFlagSection = PP.createColumnsRow Small [createDefaultCell (leftPad 2 ' ' "options") FixedWidth {s = 27}] 2
+          flagRows = map (\f -> PP.createColumnsRow Small (createFlagDocRow f) 4) (commandFlags opt)
+       in mainRow : flagRows
 
-  printSection "Options"
-  mapM_ (T.putStrLn . printRow) options
+    -- command and description
+
+    createCmdDescCells opt =
+      [ createDefaultCell
+          (longCmd opt ++ ", " ++ shortCmd opt)
+          FixedWidth {s = 27},
+        createDefaultCell (description opt) FixedWidth {s = 40}
+      ]
+
+    createCmdDescRows opts = PP.createColumnsRow Small (createCmdDescCells opts) 2
+
+    -- flag description
+    createFlagDocRow :: FlagDoc -> [PrintableCell]
+    createFlagDocRow x =
+      [ createDefaultCell (leftPad 2 ' ' (flag x)) FixedWidth {s = 27},
+        createDefaultCell (leftPad 2 ' ' (flagDescription x)) FixedWidth {s = 27}
+      ]
 
 printSection :: String -> IO ()
 printSection x = T.putStrLn (T.pack $ x <> ":")

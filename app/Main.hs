@@ -40,7 +40,7 @@ import Features.GroupByCompany.GroupByCompanyTable (createGroupByCompanyTable)
 import Parse (parseCsvData)
 import qualified PrettyPrint as PP
 import System.Environment (getArgs)
-import Types.CLITypes (CommandLineOption (..))
+import Types.CLITypes (CommandLineOption (..), FlagDoc (..))
 import Types.Transaction.GenericTransaction
   ( Transaction,
   )
@@ -62,11 +62,18 @@ mainCommands =
       "buy-sell"
       "bs"
       "Print buy and sell transactions"
+      []
       printBuySellHistory,
     CommandLineOption
       "group-by-company"
       "gbc"
       "Print results grouped by company"
+      [ FlagDoc
+          { flag = "--sort",
+            flagDescription = "sorting...",
+            defaultValue = "name or something"
+          }
+      ]
       printGroupByComany
   ]
 
@@ -74,7 +81,7 @@ actionNoOp :: [String] -> FilePath -> IO ()
 actionNoOp _ _ = return ()
 
 helpOption :: CommandLineOption
-helpOption = CommandLineOption "--help" "-h" "Print help" actionNoOp
+helpOption = CommandLineOption "--help" "-h" "Print help" [] actionNoOp
 
 handleArg :: [String] -> IO ()
 handleArg [] = putStrLn "No arguments provided, write --help for instructions"
