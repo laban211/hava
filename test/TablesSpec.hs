@@ -4,8 +4,8 @@ module TablesSpec
 where
 
 import Data.Text (Text)
-import Tables.BuySellTable (createBuySellTable)
-import Tables.GroupByCompanyTable (createGroupByCompanyTable)
+import Features.BuySell.BuySellTable (createBuySellTable)
+import Features.GroupByCompany.GroupByCompanyTable (createGroupByCompanyTable)
 import Test.Hspec
   ( Spec,
     describe,
@@ -36,7 +36,7 @@ testGroupByCompanyTable = do
     let uiSize = Small
     let termWidth = 100
     let rows = []
-    let table = createGroupByCompanyTable uiSize termWidth rows
+    let table = createGroupByCompanyTable uiSize termWidth [] rows
 
     table `shouldSatisfy` isText
 
