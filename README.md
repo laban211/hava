@@ -27,8 +27,8 @@ Run Hava using the command `stack run hava-exe -- [options]`. Replace
 
 Running `stack run hava-exe -- --help` will provide the different options and
 the arguments needed for those options. One of the more useful commands is
-`--group-by-company` which can be ran with `stack run hava-exe --
---group-by-company <path-to-csv-file>`
+`group-by-company` which can be ran with `stack run hava-exe --
+group-by-company <path-to-csv-file>`
 
 ## Future Enhancements
 New features and enhancements will be added as needed. Stay tuned for updates!
