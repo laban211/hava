@@ -101,9 +101,8 @@ helpOption = CommandLineOption "--help" "-h" "Print help" [] actionNoOp
 handleArg :: [String] -> IO ()
 handleArg [] = putStrLn "No arguments provided, write --help for instructions"
 handleArg [flag] = printHelp mainCommands [helpOption]
--- todo: extraArgs in the middle is a bit complex I guess
-handleArg (flag : args) =
-  case find (\opt -> flag == longCmd opt || flag == shortCmd opt) mainCommands of
+handleArg (cmd : args) =
+  case find (\opt -> cmd == longCmd opt || cmd == shortCmd opt) mainCommands of
     Just opt -> case unsnoc args of
       Just (extraArgs, filePath) -> action opt extraArgs filePath
       Nothing -> error "Missing filepath"

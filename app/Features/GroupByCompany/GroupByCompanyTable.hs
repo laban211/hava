@@ -105,8 +105,6 @@ groupByCompanyHeader =
       RightAlign
   ]
 
--- todo: rewrite doc
-
 -- | Transforms a list of parsed transactions that shoud belong to the same company into printable
 --   cells
 createGroupByCompanyRow ::

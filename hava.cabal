@@ -29,7 +29,6 @@ library
       Features.GroupByCompany.GroupByCompanyTable
       Features.GroupByCompany.GroupByCompanyTypes
       Main
-      ArgParse
       Calc
       CLIHelp
       Parse

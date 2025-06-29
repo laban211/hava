@@ -93,18 +93,6 @@ strToSortableColumnMap =
 parseSortableColumnMap :: String -> Maybe SortableColumn
 parseSortableColumnMap key = Map.lookup key strToSortableColumnMap
 
-{- sortableColumnToStr :: SortableColumn -> String
-sortableColumnToStr col = case col of
-  Company -> generatedStr
-  Bought -> generatedStr
-  Sold -> generatedStr
-  CurrentAmmount -> generatedStr
-  Profit -> generatedStr
-  Dividend -> generatedStr
-  ProfitForSold -> generatedStr
-  where
-    generatedStr = lowercaseFirst (show col) -}
-
 sortableColumnToStr :: SortableColumn -> String
 sortableColumnToStr col = lowercaseFirst (show col)
 

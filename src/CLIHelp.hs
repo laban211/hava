@@ -60,40 +60,6 @@ printUsage = do
   printSection "Usage"
   T.putStrLn printRow
 
--- todo: better name
-indent1, indent2, indent3 :: Int
-indent1 = 2
-indent2 = 4
-indent3 = 6
-
-createSimpleRowWithIndent :: Int -> String -> T.Text
-createSimpleRowWithIndent indent content = PP.createColumnsRow Small [createDefaultCell content FixedWidth {s = 35}] indent
-
-createSimpleRowInd1 :: String -> T.Text
-createSimpleRowInd1 = createSimpleRowWithIndent indent1
-
-createSimpleRowInd2 :: String -> T.Text
-createSimpleRowInd2 = createSimpleRowWithIndent indent2
-
-{- createMultiCellRowWithIndent :: Int -> [String] -> T.Text
-createMultiCellRowWithIndent indent cellContents = PP.createColumnsRow Small (map (\c -> createDefaultCell c FixedWidth {s = 40}) cellContents) indent
-
-createMultiCellRowInd3 :: [String] -> T.Text
-createMultiCellRowInd3 = createMultiCellRowWithIndent indent3 -}
-
-create2CellRowWithIndent :: Int -> String -> String -> T.Text
-create2CellRowWithIndent indent cell1 cell2 =
-  PP.createColumnsRow
-    Small
-    -- aim for 80 total width
-    [ createDefaultCell cell1 FixedWidth {s = 35 - indent},
-      createDefaultCell cell2 FixedWidth {s = 45}
-    ]
-    indent
-
-create2CellRowInd3 :: String -> String -> T.Text
-create2CellRowInd3 = create2CellRowWithIndent indent3
-
 printCmdLineOpts :: String -> [CommandLineOption] -> IO ()
 printCmdLineOpts sectionName options = do
   let allRows = List.intercalate [T.empty] (map renderOption options)
@@ -101,10 +67,6 @@ printCmdLineOpts sectionName options = do
   printSection sectionName
   mapM_ T.putStrLn allRows
   where
-    -- todo: move out
-    leftPad :: Int -> Char -> String -> String
-    leftPad n c s = replicate (n - length s) c ++ s
-
     renderOption :: CommandLineOption -> [T.Text]
     renderOption opt =
       let cmdName = createSimpleRowInd1 (longCmd opt ++ ", " ++ shortCmd opt)
@@ -139,3 +101,32 @@ getAdjustedTerminalWidth = fmap (fmap (\w -> w - 10)) getTerminalWidth
 getUiSizeBasedOnTerminalWidth :: IO UiSize
 getUiSizeBasedOnTerminalWidth = do
   calcUiSize <$> getAdjustedTerminalWidth
+
+-- Utilities for simpler layout creation
+
+indent1, indent2, indent3 :: Int
+indent1 = 2
+indent2 = 4
+indent3 = 6
+
+createSimpleRowWithIndent :: Int -> String -> T.Text
+createSimpleRowWithIndent indent content = PP.createColumnsRow Small [createDefaultCell content FixedWidth {s = 35}] indent
+
+createSimpleRowInd1 :: String -> T.Text
+createSimpleRowInd1 = createSimpleRowWithIndent indent1
+
+createSimpleRowInd2 :: String -> T.Text
+createSimpleRowInd2 = createSimpleRowWithIndent indent2
+
+create2CellRowWithIndent :: Int -> String -> String -> T.Text
+create2CellRowWithIndent indent cell1 cell2 =
+  PP.createColumnsRow
+    Small
+    -- aim for 80 total width
+    [ createDefaultCell cell1 FixedWidth {s = 35 - indent},
+      createDefaultCell cell2 FixedWidth {s = 45}
+    ]
+    indent
+
+create2CellRowInd3 :: String -> String -> T.Text
+create2CellRowInd3 = create2CellRowWithIndent indent3
