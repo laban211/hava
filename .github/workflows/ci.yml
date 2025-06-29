@@ -29,9 +29,13 @@ jobs:
           path: .
           fail-on: warning
 
-      - name: Install ormolu
+      - name: Download Ormolu binary
         run: |
-          stack install ormolu
+          curl -L https://github.com/tweag/ormolu/releases/download/0.6.0.1/ormolu-Linux.zip -o ormolu.zip
+          unzip ormolu.zip
+          chmod +x ormolu
+          sudo mv ormolu /usr/local/bin/
+          ormolu --version
 
       - name: Check formatting with ormolu
         run: |
