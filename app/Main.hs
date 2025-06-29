@@ -35,12 +35,15 @@ import Data.Tuple
     snd,
   )
 import qualified Data.Vector as V
+import Features.BuySell.BuySellTable (createBuySellTable)
+import Features.GroupByCompany.GroupByCompanyArgParse (sortableColumnToStr)
+import qualified Features.GroupByCompany.GroupByCompanyArgParse as GbcArgParse
+import Features.GroupByCompany.GroupByCompanyTable (createGroupByCompanyTable)
+import qualified Features.GroupByCompany.GroupByCompanyTypes as GBC
 import Parse (parseCsvData)
 import qualified PrettyPrint as PP
 import System.Environment (getArgs)
-import Tables.BuySellTable (createBuySellTable)
-import Tables.GroupByCompanyTable (createGroupByCompanyTable)
-import Types.CLITypes (CommandLineOption (..))
+import Types.CLITypes (CommandLineOption (..), FlagDoc (..))
 import Types.Transaction.GenericTransaction
   ( Transaction,
   )
@@ -49,43 +52,64 @@ import Types.Transaction.ParsedTransaction
   )
 import Types.UiSize (calcUiSize)
 import Types.UtilTypes (SortedByDateList (..))
-import Util (SortableByDate (..))
+import Util (SortableByDate (..), unsnoc)
 
 main :: IO ()
 main = do
   args <- getArgs
   handleArg args
 
-mainOptions :: [CommandLineOption]
-mainOptions =
+mainCommands :: [CommandLineOption]
+mainCommands =
   [ CommandLineOption
-      "--buy-sell"
-      "-bs"
+      "buy-sell"
+      "bs"
       "Print buy and sell transactions"
+      []
       printBuySellHistory,
     CommandLineOption
-      "--group-by-company"
-      "-gbc"
+      "group-by-company"
+      "gbc"
       "Print results grouped by company"
+      [ FlagDoc
+          { flag = "--sort <column> [asc|desc] ",
+            flagDescriptionRows =
+              [ "Sort table by column (default: asc)",
+                -- table order
+                -- Företag, Köpt, Sålt, Nuv. balans, Vinst (kr), Utdelning (kr), Vinst sålda (kr)
+                "Columns: " ++ createGbcSortOpts [GBC.Company, GBC.Bought, GBC.Sold] ++ ",",
+                "         " ++ createGbcSortOpts [GBC.CurrentAmount, GBC.Profit] ++ ",",
+                "         " ++ createGbcSortOpts [GBC.Dividend, GBC.ProfitForSold]
+              ]
+          },
+        FlagDoc
+          { flag = "--limit <number>",
+            flagDescriptionRows = ["Limit number of rows (must be > 1)"]
+          }
+      ]
       printGroupByComany
   ]
+  where
+    createGbcSortOpts xs = List.intercalate ", " (map sortableColumnToStr xs)
 
-actionNoOp :: FilePath -> IO ()
-actionNoOp _ = return ()
+actionNoOp :: [String] -> FilePath -> IO ()
+actionNoOp _ _ = return ()
 
 helpOption :: CommandLineOption
-helpOption = CommandLineOption "--help" "-h" "Print help" actionNoOp
+helpOption = CommandLineOption "--help" "-h" "Print help" [] actionNoOp
 
 handleArg :: [String] -> IO ()
 handleArg [] = putStrLn "No arguments provided, write --help for instructions"
-handleArg [flag] = printHelp (helpOption : mainOptions)
-handleArg (flag : filePath : _) =
-  case find (\opt -> flag == longArg opt || flag == shortArg opt) mainOptions of
-    Just opt -> action opt filePath
+handleArg [flag] = printHelp mainCommands [helpOption]
+handleArg (cmd : args) =
+  case find (\opt -> cmd == longCmd opt || cmd == shortCmd opt) mainCommands of
+    Just opt -> case unsnoc args of
+      Just (extraArgs, filePath) -> action opt extraArgs filePath
+      Nothing -> error "Missing filepath"
     Nothing -> error "Unknown flag"
 
-printBuySellHistory :: FilePath -> IO ()
-printBuySellHistory filePath = do
+printBuySellHistory :: [String] -> FilePath -> IO ()
+printBuySellHistory cliFlags filePath = do
   rows <- readCsv filePath
   termWidth <- getAdjustedTerminalWidth
   let uiSize = calcUiSize termWidth
@@ -99,8 +123,8 @@ printBuySellHistory filePath = do
 
   T.putStr printContent
 
-printGroupByComany :: FilePath -> IO ()
-printGroupByComany filePath = do
+printGroupByComany :: [String] -> FilePath -> IO ()
+printGroupByComany cliFlags filePath = do
   rows <- readCsv filePath
   termWidth <- getAdjustedTerminalWidth
   let uiSize = calcUiSize termWidth
@@ -110,6 +134,7 @@ printGroupByComany filePath = do
         createGroupByCompanyTable
           uiSize
           (fromMaybe 0 termWidth)
+          cliFlags
           (Map.elems groupedByCompany)
 
   T.putStr printContent

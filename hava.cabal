@@ -24,9 +24,11 @@ source-repository head
 
 library
   exposed-modules:
+      Features.BuySell.BuySellTable
+      Features.GroupByCompany.GroupByCompanyArgParse
+      Features.GroupByCompany.GroupByCompanyTable
+      Features.GroupByCompany.GroupByCompanyTypes
       Main
-      Tables.BuySellTable
-      Tables.GroupByCompanyTable
       Calc
       CLIHelp
       Parse
@@ -34,6 +36,7 @@ library
       Types.CLITypes
       Types.Money
       Types.PrintableCell
+      Types.Table.SortOption
       Types.Transaction.GenericTransaction
       Types.Transaction.ParsedTransaction
       Types.Transaction.TransactionBuySell
@@ -67,8 +70,10 @@ library
 executable hava-exe
   main-is: Main.hs
   other-modules:
-      Tables.BuySellTable
-      Tables.GroupByCompanyTable
+      Features.BuySell.BuySellTable
+      Features.GroupByCompany.GroupByCompanyArgParse
+      Features.GroupByCompany.GroupByCompanyTable
+      Features.GroupByCompany.GroupByCompanyTypes
       Paths_hava
   hs-source-dirs:
       app

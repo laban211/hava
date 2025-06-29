@@ -7,6 +7,7 @@ module CLIHelp
   )
 where
 
+import qualified Data.List as List
 import qualified Data.Text as T
 import qualified Data.Text.IO as T
 import qualified PrettyPrint as PP
@@ -14,10 +15,11 @@ import System.Console.Terminal.Size
   ( Window (..),
     size,
   )
-import Types.CLITypes (CommandLineOption (..))
+import Types.CLITypes (CommandLineOption (..), FlagDoc (..))
 import Types.PrintableCell
   ( CellWidth (..),
     FixedWidth (..),
+    PrintableCell,
     createDefaultCell,
   )
 import Types.UiSize
@@ -25,16 +27,19 @@ import Types.UiSize
     calcUiSize,
   )
 
-printHelp :: [CommandLineOption] -> IO ()
-printHelp options = do
+-- todo: separata commands and options..?
+printHelp :: [CommandLineOption] -> [CommandLineOption] -> IO ()
+printHelp commands options = do
   printUsage
   T.putStrLn (T.pack "")
-  printCmdLineOpts options
+  printCmdLineOpts "Commands" commands
+  T.putStrLn (T.pack "")
+  printCmdLineOpts "Global options" options
 
 usages :: [(String, String)]
 usages =
-  [ ( "hava [option] [path-to-csv-file]",
-      "Run Hava in <option>-mode for Avanza transactions file"
+  [ ( "hava [command] [path-to-csv-file]",
+      "Run Hava in <command>-mode for Avanza transactions file"
     )
   ]
 
@@ -44,10 +49,10 @@ printUsage = do
   let bMaxLen = maximum $ map (length . snd) usages
   let cells =
         [ createDefaultCell
-            "hava [option] [path-to-csv-file]"
+            "hava [command] [path-to-csv-file]"
             FixedWidth {s = aMaxLen + 3},
           createDefaultCell
-            "Run Hava in <option>-mode for Avanza transaction file"
+            "Run Hava in <command>-mode for Avanza transaction file"
             FixedWidth {s = bMaxLen}
         ]
   let printRow = PP.createColumnsRow Small cells 2
@@ -55,18 +60,33 @@ printUsage = do
   printSection "Usage"
   T.putStrLn printRow
 
-printCmdLineOpts :: [CommandLineOption] -> IO ()
-printCmdLineOpts options = do
-  let createCellWithOpts opt =
-        [ createDefaultCell
-            (longArg opt ++ ", " ++ shortArg opt)
-            FixedWidth {s = 27},
-          createDefaultCell (description opt) FixedWidth {s = 40}
-        ]
-  let printRow opts = PP.createColumnsRow Small (createCellWithOpts opts) 2
+printCmdLineOpts :: String -> [CommandLineOption] -> IO ()
+printCmdLineOpts sectionName options = do
+  let allRows = List.intercalate [T.empty] (map renderOption options)
 
-  printSection "Options"
-  mapM_ (T.putStrLn . printRow) options
+  printSection sectionName
+  mapM_ T.putStrLn allRows
+  where
+    renderOption :: CommandLineOption -> [T.Text]
+    renderOption opt =
+      let cmdName = createSimpleRowInd1 (longCmd opt ++ ", " ++ shortCmd opt)
+          cmdDesc = createSimpleRowInd2 (description opt)
+          flagDescSection = createSimpleRowInd2 "options:"
+          flagDescRows = concatMap createFlagDocRows (commandFlags opt)
+          maybeFlagSection =
+            if null flagDescRows
+              then []
+              else flagDescSection : flagDescRows
+       in cmdName : cmdDesc : maybeFlagSection
+
+    -- flag description
+    createFlagDocRows :: FlagDoc -> [T.Text]
+    createFlagDocRows x =
+      let descRows = flagDescriptionRows x
+          fstRow = create2CellRowInd3 (flag x) (head descRows)
+          restRows = map (create2CellRowInd3 "") (tail descRows)
+          paddingRow = createSimpleRowInd2 ""
+       in fstRow : restRows ++ [paddingRow]
 
 printSection :: String -> IO ()
 printSection x = T.putStrLn (T.pack $ x <> ":")
@@ -81,3 +101,32 @@ getAdjustedTerminalWidth = fmap (fmap (\w -> w - 10)) getTerminalWidth
 getUiSizeBasedOnTerminalWidth :: IO UiSize
 getUiSizeBasedOnTerminalWidth = do
   calcUiSize <$> getAdjustedTerminalWidth
+
+-- Utilities for simpler layout creation
+
+indent1, indent2, indent3 :: Int
+indent1 = 2
+indent2 = 4
+indent3 = 6
+
+createSimpleRowWithIndent :: Int -> String -> T.Text
+createSimpleRowWithIndent indent content = PP.createColumnsRow Small [createDefaultCell content FixedWidth {s = 35}] indent
+
+createSimpleRowInd1 :: String -> T.Text
+createSimpleRowInd1 = createSimpleRowWithIndent indent1
+
+createSimpleRowInd2 :: String -> T.Text
+createSimpleRowInd2 = createSimpleRowWithIndent indent2
+
+create2CellRowWithIndent :: Int -> String -> String -> T.Text
+create2CellRowWithIndent indent cell1 cell2 =
+  PP.createColumnsRow
+    Small
+    -- aim for 80 total width
+    [ createDefaultCell cell1 FixedWidth {s = 35 - indent},
+      createDefaultCell cell2 FixedWidth {s = 45}
+    ]
+    indent
+
+create2CellRowInd3 :: String -> String -> T.Text
+create2CellRowInd3 = create2CellRowWithIndent indent3

@@ -1,11 +1,18 @@
 module Types.CLITypes
   ( CommandLineOption (..),
+    FlagDoc (..),
   )
 where
 
 data CommandLineOption = CommandLineOption
-  { longArg :: String,
-    shortArg :: String,
+  { longCmd :: String,
+    shortCmd :: String,
     description :: String,
-    action :: FilePath -> IO ()
+    commandFlags :: [FlagDoc],
+    action :: [String] -> FilePath -> IO ()
+  }
+
+data FlagDoc = FlagDoc
+  { flag :: String,
+    flagDescriptionRows :: [String]
   }
