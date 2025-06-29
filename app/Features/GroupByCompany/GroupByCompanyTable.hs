@@ -141,8 +141,8 @@ sortGroupByCompanyRows (GroupByCompanySortOption (SortOption column order)) rows
     ProfitForSold -> applySort (compare `on` profitForSold) rows
   where
     applySort cmp = case order of
-      Ascending -> sortBy (\a b -> a `cmp` b)
-      Descending -> sortBy (\a b -> b `cmp` a)
+      Ascending -> sortBy cmp
+      Descending -> sortBy (flip cmp)
 
 groupByCompanyRowToCells :: [PrintableCell] -> GroupByCompanyContentRow -> [PrintableCell]
 groupByCompanyRowToCells header row =
