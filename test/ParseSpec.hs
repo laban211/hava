@@ -22,7 +22,7 @@ testBasicParsing = do
     -- Populate with header row twice so that the header will be pared into
     -- Generic transaction. We can then make sure the values get parsed into
     -- the expected fields
-    let row = stringsToCsvByteString [csvHeader2024, csvHeader2024]
+    let row = stringsToCsvByteString [csvHeader2025, csvHeader2025]
     let expected =
           [ GenericTransaction
               { date = T.pack "Datum",
@@ -32,7 +32,7 @@ testBasicParsing = do
                 quantity = T.pack "Antal",
                 rate = T.pack "Kurs",
                 amount = T.pack "Belopp",
-                courtage = T.pack "Courtage (SEK)",
+                courtage = T.pack "Courtage",
                 currency = T.pack "Instrumentvaluta",
                 isin = T.pack "ISIN"
               }
@@ -44,7 +44,7 @@ testParseBuy = do
   it "should parse buy transaction" $ do
     let withBuyRow =
           stringsToCsvByteString
-            [ csvHeader2024,
+            [ csvHeader2025,
               "2024-01-01;1111111;Köp;Company A;5;100;-500;SEK;7;;SEK;some-isin;"
             ]
     let expectedGenericTransaction =
@@ -73,6 +73,9 @@ csvHeader = "Datum;Konto;Typ av transaktion;Värdepapper/beskrivning;Antal;Kurs;
 
 csvHeader2024 :: String
 csvHeader2024 = "Datum;Konto;Typ av transaktion;Värdepapper/beskrivning;Antal;Kurs;Belopp;Transaktionsvaluta;Courtage (SEK);Valutakurs;Instrumentvaluta;ISIN;Resultat"
+
+csvHeader2025 :: String
+csvHeader2025 = "Datum;Konto;Typ av transaktion;Värdepapper/beskrivning;Antal;Kurs;Belopp;Transaktionsvaluta;Courtage;Valutakurs;Instrumentvaluta;ISIN;Resultat"
 
 stringsToCsvByteString :: [String] -> UTF8.ByteString
 stringsToCsvByteString rows = UTF8.fromString $ unlines rows
