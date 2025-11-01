@@ -43,16 +43,12 @@ transformToBuySell (GenericTransaction date account action company quantity rate
 
     return $
       GenericTransaction
-        { date = date,
-          account = account,
-          action = action',
-          company = company,
+        { action = action',
           quantity = quantity',
           rate = rate',
           amount = amount',
           courtage = courtage',
-          currency = currency,
-          isin = isin
+          ..
         }
 
 instance SortableByDate TransactionBuySell where

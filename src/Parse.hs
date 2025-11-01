@@ -46,36 +46,22 @@ import Types.Transaction.GenericTransaction
     Transaction (..),
   )
 
-avanzaCsvHeader2024 :: String
-avanzaCsvHeader2024 = "Datum;Konto;Typ av transaktion;Värdepapper/beskrivning;Antal;Kurs;Belopp;Transaktionsvaluta;Courtage (SEK);Valutakurs;Instrumentvaluta;ISIN;Resultat"
-
 instance FromNamedRecord Transaction where
-  parseNamedRecord r =
-    GenericTransaction
-      <$> r
-        .: "Datum"
-      <*> r
-        .: "Konto"
-      <*> r
-        .: "Typ av transaktion"
-      <*> r
-        .: BU.fromString "Värdepapper/beskrivning"
-      <*> r
-        .: "Antal"
-      <*> r
-        .: "Kurs"
-      <*> r
-        .: "Belopp"
-      -- trans valuta
-      <*> r
-        .: "Courtage (SEK)"
-      -- valuta-kurs
-      <*> r
-        .: "Instrumentvaluta"
-      <*> r
-        .: "ISIN"
+  parseNamedRecord r = do
+    date      <- r .: "Datum"
+    account   <- r .: "Konto"
+    action    <- r .: "Typ av transaktion"
+    company   <- r .: BU.fromString "Värdepapper/beskrivning"
+    quantity  <- r .: "Antal"
+    rate      <- r .: "Kurs"
+    amount    <- r .: "Belopp"
+    courtage  <- r .: "Courtage"
+    currency  <- r .: "Instrumentvaluta"
+    isin      <- r .: "ISIN"
 
--- resultat
+    return GenericTransaction {..}
+
+-- Note: "resultat" avilable but not parsed at this time
 
 parseCsvData :: ByteString.ByteString -> [Transaction]
 parseCsvData csvData = case decodeByNameWith decOptions (dropBOM csvData) of

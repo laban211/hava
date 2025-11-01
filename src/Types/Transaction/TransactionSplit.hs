@@ -32,14 +32,10 @@ transformToSplit (GenericTransaction date account action company quantity rate a
 
     return $
       GenericTransaction
-        { date = date,
-          account = account,
-          action = action',
-          company = company,
+        { action = action',
           quantity = quantity',
           rate = (),
           amount = (),
           courtage = (),
-          currency = currency,
-          isin = isin
+          ..
         }
