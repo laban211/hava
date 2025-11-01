@@ -10,6 +10,9 @@ import qualified Parse as P
 import Test.Hspec
 import Types.Transaction.GenericTransaction (GenericTransaction (..))
 import Types.Transaction.TransactionBuySell (transformToBuySell)
+import Control.Exception (evaluate, ErrorCall (ErrorCall))
+import Data.List (isInfixOf)
+import TestUtils (shouldThrowErrorContaining)
 
 spec :: Spec
 spec = do
@@ -38,6 +41,21 @@ testBasicParsing = do
               }
           ]
     P.parseCsvData row `shouldBe` expected
+
+  it "fails with a friendly message if a required header is missing" $ do
+    let badHeader =
+          "Datum-with-extra-chars;Konto;Typ av transaktion;Värdepapper/beskrivning;Antal;Kurs;Belopp;Courtage;Instrumentvaluta;ISIN"
+    let csv = stringsToCsvByteString [badHeader] 
+
+    evaluate (P.parseCsvData csv) 
+      `shouldThrowErrorContaining` "Unexpected CSV header." 
+
+    evaluate (P.parseCsvData csv)
+      `shouldThrowErrorContaining` "Missing: Datum"
+
+    evaluate (P.parseCsvData csv)
+       -- Note: 2 extra spaces is expected after "Extra" to align with "Missing"
+      `shouldThrowErrorContaining` "Extra:   Datum-with-extra-chars" 
 
 testParseBuy :: Spec
 testParseBuy = do

@@ -108,6 +108,7 @@ test-suite hava-test
       CalcSpec
       ParseSpec
       TablesSpec
+      TestUtils
       Paths_hava
   hs-source-dirs:
       test
