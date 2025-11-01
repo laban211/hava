@@ -37,14 +37,10 @@ transformToDividend (GenericTransaction date account action company quantity rat
 
     return $
       GenericTransaction
-        { date = date,
-          account = account,
-          action = action',
-          company = company,
+        { action = action',
           quantity = quantity',
           rate = rate',
           amount = amount',
           courtage = courtage',
-          currency = currency,
-          isin = isin
+          ..
         }

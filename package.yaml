@@ -33,6 +33,10 @@ dependencies:
   - hspec
   - terminal-size
 
+default-extensions:
+  - OverloadedStrings
+  - RecordWildCards
+
 library:
   source-dirs:
     - app
