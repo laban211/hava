@@ -1,10 +1,11 @@
-module TestUtils (
-  shouldThrowErrorContaining
-) where 
+module TestUtils
+  ( shouldThrowErrorContaining,
+  )
+where
 
-import Control.Exception (ErrorCall(..))
-import Test.Hspec 
+import Control.Exception (ErrorCall (..))
 import Data.List (isInfixOf)
+import Test.Hspec
 
 shouldThrowErrorContaining :: IO a -> String -> Expectation
 shouldThrowErrorContaining action str =

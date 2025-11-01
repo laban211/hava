@@ -3,16 +3,16 @@ module ParseSpec
   )
 where
 
+import Control.Exception (ErrorCall (ErrorCall), evaluate)
 import qualified Data.ByteString.Lazy.UTF8 as UTF8
+import Data.List (isInfixOf)
 import Data.Maybe (isJust)
 import qualified Data.Text as T
 import qualified Parse as P
 import Test.Hspec
+import TestUtils (shouldThrowErrorContaining)
 import Types.Transaction.GenericTransaction (GenericTransaction (..))
 import Types.Transaction.TransactionBuySell (transformToBuySell)
-import Control.Exception (evaluate, ErrorCall (ErrorCall))
-import Data.List (isInfixOf)
-import TestUtils (shouldThrowErrorContaining)
 
 spec :: Spec
 spec = do
@@ -45,17 +45,17 @@ testBasicParsing = do
   it "fails with a friendly message if a required header is missing" $ do
     let badHeader =
           "Datum-with-extra-chars;Konto;Typ av transaktion;Värdepapper/beskrivning;Antal;Kurs;Belopp;Courtage;Instrumentvaluta;ISIN"
-    let csv = stringsToCsvByteString [badHeader] 
+    let csv = stringsToCsvByteString [badHeader]
 
-    evaluate (P.parseCsvData csv) 
-      `shouldThrowErrorContaining` "Unexpected CSV header." 
+    evaluate (P.parseCsvData csv)
+      `shouldThrowErrorContaining` "Unexpected CSV header."
 
     evaluate (P.parseCsvData csv)
       `shouldThrowErrorContaining` "Missing: Datum"
 
     evaluate (P.parseCsvData csv)
-       -- Note: 2 extra spaces is expected after "Extra" to align with "Missing"
-      `shouldThrowErrorContaining` "Extra:   Datum-with-extra-chars" 
+      -- Note: 2 extra spaces is expected after "Extra" to align with "Missing"
+      `shouldThrowErrorContaining` "Extra:   Datum-with-extra-chars"
 
 testParseBuy :: Spec
 testParseBuy = do
