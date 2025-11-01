@@ -28,18 +28,17 @@ import qualified Data.Text as T
 import qualified Data.Text.Encoding as T
 import qualified Data.Vector as V
 import qualified Data.List as L
+import System.Exit (die)
+import           Data.Word (Word8)
 -- Types
 import Types.Money (Money (..))
 import Types.Transaction.GenericTransaction
   ( GenericTransaction (..),
     Transaction (..),
   )
-import System.Exit (die)
-import qualified Codec.Binary.UTF8.Generic as BS
-import           Data.Word (Word8)
 
-expectedHeaders :: [BS.ByteString]
-expectedHeaders = map BS.fromString
+expectedHeaders :: [BSU.ByteString]
+expectedHeaders = map BSU.fromString
   [ "Datum"
   , "Konto"
   , "Typ av transaktion"
@@ -98,7 +97,7 @@ checkHeadersStrict found =
        let missing = filter (`notElem` found) expectedHeaders
            extra   = filter (`notElem` expectedHeaders) found
            pretty  = L.intercalate ", "
-           s       = map BS.toString
+           s       = map BSU.toString
        in Just $ unlines
             [ "Unexpected CSV header."
             , "Missing: " <> pretty (s missing)
@@ -106,6 +105,7 @@ checkHeadersStrict found =
             , "Expected headers:\n" <> unlines (map ("  " <>) (s expectedHeaders))
             , "Found headers:\n"    <> unlines (map ("  " <>) (s found))
             ]
+
 -- Delimiters as Word8
 semi, nl :: Word8
 semi = 59  -- ';'
