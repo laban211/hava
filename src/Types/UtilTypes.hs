@@ -9,6 +9,9 @@ module Types.UtilTypes
     parseDouble,
     parseMoney,
     parseMoneyDefault0,
+    normalizeSvNumber,
+    parseSvDouble,
+    parseSvMoney,
     SortedByDateList (..),
   )
 where
@@ -40,6 +43,22 @@ parseMoneyDefault0 :: Text -> Money
 parseMoneyDefault0 t = case parseMoney t of
   Just m -> m
   Nothing -> Money 0.0
+
+-- Avanza's "consolidated holdings" export formats numbers in the Swedish locale:
+-- a comma as the decimal separator and (for large values) spaces as thousands
+-- separators, e.g. "1 234 567,89". This normalizes such a value into something
+-- 'parseDouble' understands by dropping the (possibly non-breaking) spaces and
+-- swapping the decimal comma for a dot.
+normalizeSvNumber :: Text -> Text
+normalizeSvNumber =
+  T.replace (T.pack ",") (T.pack ".")
+    . T.filter (\c -> c /= ' ' && c /= '\160')
+
+parseSvDouble :: Text -> Maybe Double
+parseSvDouble = parseDouble . normalizeSvNumber
+
+parseSvMoney :: Text -> Maybe Money
+parseSvMoney t = Money <$> parseSvDouble t
 
 newtype SortedByDateList a = SortedByDateList {getSortedByDateList :: [a]}
   deriving (Show, Eq, Ord, Functor, Foldable)

@@ -4,6 +4,7 @@
 
 module Parse
   ( parseCsvData,
+    parsePositionCsvData,
   )
 where
 
@@ -32,13 +33,14 @@ import Data.Word (Word8)
 import System.Exit (die)
 -- Types
 import Types.Money (Money (..))
+import Types.Position (Position, expectedPositionHeaders)
 import Types.Transaction.GenericTransaction
   ( GenericTransaction (..),
     Transaction (..),
   )
 
-expectedHeaders :: [BSU.ByteString]
-expectedHeaders =
+expectedTransactionHeaders :: [BSU.ByteString]
+expectedTransactionHeaders =
   map
     BSU.fromString
     [ "Datum",
@@ -71,11 +73,21 @@ instance FromNamedRecord Transaction where
 -- Note: "resultat" avilable but not parsed at this time
 
 parseCsvData :: BSL.ByteString -> [Transaction]
-parseCsvData csvData =
+parseCsvData = parseCsvWith expectedTransactionHeaders
+
+parsePositionCsvData :: BSL.ByteString -> [Position]
+parsePositionCsvData = parseCsvWith expectedPositionHeaders
+
+-- | Decode a ';'-delimited Avanza CSV export into a list of records of any
+--   format with a 'FromNamedRecord' instance. Strips a leading UTF-8 BOM and
+--   validates the header against the format's expected columns before decoding.
+parseCsvWith ::
+  (FromNamedRecord a) => [BSU.ByteString] -> BSL.ByteString -> [a]
+parseCsvWith expectedHeaders csvData =
   let withoutBom = dropBOM csvData
       header = readHeader withoutBom
       decOptions = defaultDecodeOptions {decDelimiter = fromIntegral (ord ';')}
-   in case checkHeadersStrict header of
+   in case checkHeadersStrict expectedHeaders header of
         Just msg -> error msg
         Nothing -> case decodeByNameWith decOptions withoutBom of
           Left err -> error err
@@ -91,13 +103,13 @@ readHeader bs =
   let (hdr, _) = BSL.break (== nl) bs
    in BS.split semi (BSL.toStrict hdr)
 
-checkHeadersStrict :: [BS.ByteString] -> Maybe String
-checkHeadersStrict found =
-  if all (`elem` found) expectedHeaders
+checkHeadersStrict :: [BS.ByteString] -> [BS.ByteString] -> Maybe String
+checkHeadersStrict expected found =
+  if all (`elem` found) expected
     then Nothing
     else
-      let missing = filter (`notElem` found) expectedHeaders
-          extra = filter (`notElem` expectedHeaders) found
+      let missing = filter (`notElem` found) expected
+          extra = filter (`notElem` expected) found
           pretty = L.intercalate ", "
           s = map BSU.toString
        in Just $
@@ -105,7 +117,7 @@ checkHeadersStrict found =
               [ "Unexpected CSV header.",
                 "Missing: " <> pretty (s missing),
                 "Extra:   " <> pretty (s extra),
-                "Expected headers:\n" <> unlines (map ("  " <>) (s expectedHeaders)),
+                "Expected headers:\n" <> unlines (map ("  " <>) (s expected)),
                 "Found headers:\n" <> unlines (map ("  " <>) (s found))
               ]
 

@@ -11,6 +11,8 @@ import qualified Data.Text as T
 import qualified Parse as P
 import Test.Hspec
 import TestUtils (shouldThrowErrorContaining)
+import Types.Money (Money (..))
+import Types.Position (Position (..))
 import Types.Transaction.GenericTransaction (GenericTransaction (..))
 import Types.Transaction.TransactionBuySell (transformToBuySell)
 
@@ -18,6 +20,7 @@ spec :: Spec
 spec = do
   describe "test buy transaction" testParseBuy
   describe "test basic parsing" testBasicParsing
+  describe "test position parsing" testParsePosition
 
 testBasicParsing :: Spec
 testBasicParsing = do
@@ -85,6 +88,45 @@ testParseBuy = do
     -- should be good to parse into the buy/sell-type
     let parsedBuySellTransaction = transformToBuySell $ head parsedGenericTransaction
     parsedBuySellTransaction `shouldSatisfy` isJust
+
+testParsePosition :: Spec
+testParsePosition = do
+  it "parses a consolidated-holdings row with Swedish decimal commas" $ do
+    let csv =
+          stringsToCsvByteString
+            [ positionHeader,
+              "Acme Corp;ACME;10;1234,50;100,00;100,00;SEK;SE;SE0000000001;XSTO;STOCK"
+            ]
+    let expected =
+          [ Position
+              { name = T.pack "Acme Corp",
+                shortName = T.pack "ACME",
+                volume = 10,
+                marketValue = Money 1234.50,
+                gavSek = Money 100.00,
+                gav = Money 100.00,
+                currency = T.pack "SEK",
+                country = T.pack "SE",
+                isin = T.pack "SE0000000001",
+                market = T.pack "XSTO",
+                instrumentType = T.pack "STOCK"
+              }
+          ]
+    P.parsePositionCsvData csv `shouldBe` expected
+
+  it "fails with a friendly message if a required header is missing" $ do
+    let badHeader =
+          "Namn-with-extra-chars;Kortnamn;Volym;Marknadsvärde;GAV (SEK);GAV;Valuta;Land;ISIN;Marknad;Typ"
+    let csv = stringsToCsvByteString [badHeader]
+
+    evaluate (P.parsePositionCsvData csv)
+      `shouldThrowErrorContaining` "Unexpected CSV header."
+
+    evaluate (P.parsePositionCsvData csv)
+      `shouldThrowErrorContaining` "Missing: Namn"
+
+positionHeader :: String
+positionHeader = "Namn;Kortnamn;Volym;Marknadsvärde;GAV (SEK);GAV;Valuta;Land;ISIN;Marknad;Typ"
 
 csvHeader :: String
 csvHeader = "Datum;Konto;Typ av transaktion;Värdepapper/beskrivning;Antal;Kurs;Belopp;Courtage;Valuta;ISIN"

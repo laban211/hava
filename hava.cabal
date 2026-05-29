@@ -35,6 +35,7 @@ library
       PrettyPrint
       Types.CLITypes
       Types.Money
+      Types.Position
       Types.PrintableCell
       Types.Table.SortOption
       Types.Transaction.GenericTransaction
