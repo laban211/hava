@@ -40,10 +40,12 @@ import Features.GroupByCompany.GroupByCompanyArgParse (sortableColumnToStr)
 import qualified Features.GroupByCompany.GroupByCompanyArgParse as GbcArgParse
 import Features.GroupByCompany.GroupByCompanyTable (createGroupByCompanyTable)
 import qualified Features.GroupByCompany.GroupByCompanyTypes as GBC
-import Parse (parseCsvData)
+import Features.Positions.PositionsTable (createPositionsTable)
+import Parse (parseCsvData, parsePositionCsvData)
 import qualified PrettyPrint as PP
 import System.Environment (getArgs)
 import Types.CLITypes (CommandLineOption (..), FlagDoc (..))
+import Types.Position (Position)
 import Types.Transaction.GenericTransaction
   ( Transaction,
   )
@@ -87,7 +89,13 @@ mainCommands =
             flagDescriptionRows = ["Limit number of rows (must be > 1)"]
           }
       ]
-      printGroupByComany
+      printGroupByComany,
+    CommandLineOption
+      "positions"
+      "pos"
+      "Print current holdings with unrealized profit/loss"
+      []
+      printPositions
   ]
   where
     createGbcSortOpts xs = List.intercalate ", " (map sortableColumnToStr xs)
@@ -139,8 +147,26 @@ printGroupByComany cliFlags filePath = do
 
   T.putStr printContent
 
+printPositions :: [String] -> FilePath -> IO ()
+printPositions cliFlags filePath = do
+  positions <- readPositions filePath
+  termWidth <- getAdjustedTerminalWidth
+  let uiSize = calcUiSize termWidth
+  let printContent =
+        createPositionsTable
+          uiSize
+          (fromMaybe 0 termWidth)
+          positions
+
+  T.putStr printContent
+
 readCsv :: FilePath -> IO [Transaction]
 readCsv filePath = do
   csvData <- BSL.readFile filePath
   let rows = parseCsvData csvData
   return rows
+
+readPositions :: FilePath -> IO [Position]
+readPositions filePath = do
+  csvData <- BSL.readFile filePath
+  return (parsePositionCsvData csvData)

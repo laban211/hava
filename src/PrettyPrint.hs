@@ -6,6 +6,7 @@ module PrettyPrint
     createPrettyTable,
     intToText,
     moneyToText,
+    doubleToText,
   )
 where
 
@@ -116,6 +117,16 @@ intToText = T.pack . show
 
 moneyToText :: Money -> Text
 moneyToText = T.pack . printf "%.2f" . unMoney
+
+-- Render a Double for display: whole numbers print without decimals (e.g. a
+-- stock volume of 10 -> "10"), fractional values keep up to 4 decimals (e.g. a
+-- fund volume -> "12.3456").
+doubleToText :: Double -> Text
+doubleToText d
+  | d == fromIntegral r = T.pack (show r)
+  | otherwise = T.pack (printf "%.4f" d)
+  where
+    r = round d :: Integer
 
 -- General utility functions
 

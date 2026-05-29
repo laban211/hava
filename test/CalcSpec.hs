@@ -11,7 +11,8 @@ import Test.Hspec
     it,
     shouldBe,
   )
-import Types.Money (Money)
+import Types.Money (Money (..))
+import Types.Position (Position (..))
 import Types.Transaction.GenericTransaction
   ( GenericTransaction (..),
   )
@@ -44,6 +45,7 @@ spec = do
   describe
     "Calculate total sell and dividend profit for company"
     testCalcTotalProfitForCompany
+  describe "Calculate position profit" testCalcPositionProfit
 
 testCalcSellProfit :: Spec
 testCalcSellProfit = do
@@ -164,6 +166,39 @@ createSplitRowWithPlaceHolders qty =
       courtage = (),
       currency = placeHolder,
       isin = placeHolder
+    }
+  where
+    placeHolder = T.pack "placeHolder"
+
+testCalcPositionProfit :: Spec
+testCalcPositionProfit = do
+  it "computes cost basis as volume * GAV (SEK)" $ do
+    C.calcPositionCostBasis (positionWith 10 (Money 100) (Money 1200))
+      `shouldBe` Money 1000
+  it "computes unrealized profit as market value - cost basis" $ do
+    C.calcPositionUnrealizedProfit (positionWith 10 (Money 100) (Money 1200))
+      `shouldBe` Money 200
+  it "computes return as profit / cost basis in percent" $ do
+    C.calcPositionReturnPct (positionWith 10 (Money 100) (Money 1200))
+      `shouldBe` Just 20.0
+  it "returns Nothing for a zero cost basis (avoids divide by zero)" $ do
+    C.calcPositionReturnPct (positionWith 0 (Money 0) (Money 50))
+      `shouldBe` Nothing
+
+positionWith :: Double -> Money -> Money -> Position
+positionWith vol gavSekVal marketVal =
+  Position
+    { name = placeHolder,
+      shortName = placeHolder,
+      volume = vol,
+      marketValue = marketVal,
+      gavSek = gavSekVal,
+      gav = gavSekVal,
+      currency = placeHolder,
+      country = placeHolder,
+      isin = placeHolder,
+      market = placeHolder,
+      instrumentType = placeHolder
     }
   where
     placeHolder = T.pack "placeHolder"

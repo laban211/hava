@@ -28,6 +28,7 @@ library
       Features.GroupByCompany.GroupByCompanyArgParse
       Features.GroupByCompany.GroupByCompanyTable
       Features.GroupByCompany.GroupByCompanyTypes
+      Features.Positions.PositionsTable
       Main
       Calc
       CLIHelp
@@ -78,6 +79,7 @@ executable hava-exe
       Features.GroupByCompany.GroupByCompanyArgParse
       Features.GroupByCompany.GroupByCompanyTable
       Features.GroupByCompany.GroupByCompanyTypes
+      Features.Positions.PositionsTable
       Paths_hava
   hs-source-dirs:
       app
