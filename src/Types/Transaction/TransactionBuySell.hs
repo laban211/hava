@@ -17,8 +17,8 @@ import Types.Transaction.GenericTransaction
   )
 import Types.UtilTypes
   ( parseInt,
-    parseMoney,
-    parseMoneyDefault0,
+    parseSvMoney,
+    parseSvMoneyDefault0,
   )
 import Util (SortableByDate (..))
 
@@ -35,11 +35,11 @@ transformToBuySell (GenericTransaction date account action company quantity rate
       "Sälj" -> Just Sell
       _ -> Nothing
     quantity' <- parseInt quantity
-    rate' <- parseMoney rate
-    amount' <- parseMoney amount
+    rate' <- parseSvMoney rate
+    amount' <- parseSvMoney amount
     -- I've noticed that courtage = 0 is sometimes indicated with "-" rather than
     -- "0", therefor the default
-    let courtage' = parseMoneyDefault0 courtage
+    let courtage' = parseSvMoneyDefault0 courtage
 
     return $
       GenericTransaction

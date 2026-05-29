@@ -13,7 +13,12 @@ import Test.Hspec
 import TestUtils (shouldThrowErrorContaining)
 import Types.Money (Money (..))
 import Types.Position (Position (..))
-import Types.Transaction.GenericTransaction (GenericTransaction (..))
+import Types.Transaction.GenericTransaction
+  ( GenericTransaction (..),
+    getAmount,
+    getCourtage,
+    getRate,
+  )
 import Types.Transaction.TransactionBuySell (transformToBuySell)
 
 spec :: Spec
@@ -21,6 +26,7 @@ spec = do
   describe "test buy transaction" testParseBuy
   describe "test basic parsing" testBasicParsing
   describe "test position parsing" testParsePosition
+  describe "test swedish decimal parsing" testSwedishDecimals
 
 testBasicParsing :: Spec
 testBasicParsing = do
@@ -125,6 +131,21 @@ testParsePosition = do
 
     evaluate (P.parsePositionCsvData csv)
       `shouldThrowErrorContaining` "Missing: Kontonummer"
+
+testSwedishDecimals :: Spec
+testSwedishDecimals = do
+  it "parses comma-decimal rate/amount/courtage without truncating" $ do
+    -- Real Avanza exports format money with a decimal comma, e.g. "114,3".
+    -- The values below must survive in full rather than being cut at the comma.
+    let withBuyRow =
+          stringsToCsvByteString
+            [ csvHeader2025,
+              "2024-01-01;1111111;Köp;Company A;17;114,3;-1947,96;SEK;4,86;;SEK;some-isin;"
+            ]
+    let buySell = transformToBuySell . head $ P.parseCsvData withBuyRow
+    fmap getRate buySell `shouldBe` Just (Money 114.3)
+    fmap getAmount buySell `shouldBe` Just (Money (-1947.96))
+    fmap getCourtage buySell `shouldBe` Just (Money 4.86)
 
 positionHeader :: String
 positionHeader = "Kontonummer;Namn;Kortnamn;Volym;Marknadsvärde;GAV (SEK);GAV;Valuta;Land;ISIN;Marknad;Typ"
