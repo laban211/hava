@@ -28,6 +28,7 @@ library
       Features.GroupByCompany.GroupByCompanyArgParse
       Features.GroupByCompany.GroupByCompanyTable
       Features.GroupByCompany.GroupByCompanyTypes
+      Features.Positions.PositionsTable
       Main
       Calc
       CLIHelp
@@ -35,6 +36,7 @@ library
       PrettyPrint
       Types.CLITypes
       Types.Money
+      Types.Position
       Types.PrintableCell
       Types.Table.SortOption
       Types.Transaction.GenericTransaction
@@ -77,6 +79,7 @@ executable hava-exe
       Features.GroupByCompany.GroupByCompanyArgParse
       Features.GroupByCompany.GroupByCompanyTable
       Features.GroupByCompany.GroupByCompanyTypes
+      Features.Positions.PositionsTable
       Paths_hava
   hs-source-dirs:
       app

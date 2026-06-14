@@ -9,6 +9,9 @@ module Calc
     calcRemainingAmount,
     calcSellProfit,
     calcTotalDividendProfit,
+    calcPositionCostBasis,
+    calcPositionUnrealizedProfit,
+    calcPositionReturnPct,
   )
 where
 
@@ -31,6 +34,7 @@ import Debug.Trace
     traceShowId,
   )
 import Types.Money (Money (..))
+import Types.Position (Position (..))
 import Types.Transaction.GenericTransaction
   ( Transaction,
     getAction,
@@ -188,3 +192,23 @@ calcRemainingAmount = sum . map getQuantity'
 
 calcTotalDividendProfit :: [TransactionDividend] -> Money
 calcTotalDividendProfit = sum . map getAmount
+
+-- Position (current-holding) calculations.
+--
+-- Cost basis uses the SEK average cost ("GAV (SEK)") so it shares a currency
+-- with "Marknadsvärde" (also SEK); the plain "GAV" is in the instrument's own
+-- currency for foreign holdings and would mismatch.
+calcPositionCostBasis :: Position -> Money
+calcPositionCostBasis p = Money (volume p * unMoney (gavSek p))
+
+calcPositionUnrealizedProfit :: Position -> Money
+calcPositionUnrealizedProfit p = marketValue p - calcPositionCostBasis p
+
+-- 'Nothing' when the cost basis is zero (free shares, renamed company, …) so the
+-- caller can render it as "-" rather than dividing by zero.
+calcPositionReturnPct :: Position -> Maybe Double
+calcPositionReturnPct p =
+  let cost = unMoney (calcPositionCostBasis p)
+   in if cost == 0
+        then Nothing
+        else Just (unMoney (calcPositionUnrealizedProfit p) / cost * 100)
