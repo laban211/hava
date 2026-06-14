@@ -1,3 +1,8 @@
 .stack-work/
 *~
 dist-newstyle/
+
+# Binaries/artifacts from compiling sources directly with ghc
+/app/Main
+*.o
+*.hi
