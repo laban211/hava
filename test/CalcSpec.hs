@@ -188,7 +188,8 @@ testCalcPositionProfit = do
 positionWith :: Double -> Money -> Money -> Position
 positionWith vol gavSekVal marketVal =
   Position
-    { name = placeHolder,
+    { account = placeHolder,
+      name = placeHolder,
       shortName = placeHolder,
       volume = vol,
       marketValue = marketVal,

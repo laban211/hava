@@ -52,7 +52,8 @@ testPositionsTable = do
     let termWidth = 100
     let rows =
           [ Position
-              { name = T.pack "Acme Corp",
+              { account = T.pack "0000-0000000",
+                name = T.pack "Acme Corp",
                 shortName = T.pack "ACME",
                 volume = 10,
                 marketValue = Money 1200,

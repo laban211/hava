@@ -1,10 +1,9 @@
 {-# LANGUAGE FlexibleInstances #-}
 
--- | A single row of Avanza's "Mitt sammanställda innehav" (consolidated
---   holdings) export — i.e. one current position in the portfolio. This is a
---   different shape from the transaction history (see
---   "Types.Transaction.GenericTransaction"); the two share only the ISIN, which
---   is the natural key for joining them later on.
+-- | A single row of Avanza's per-account holdings ("positioner") export — i.e.
+--   one current position held in one account. The same instrument can therefore
+--   appear in several rows (once per account it's held in), distinguished by
+--   'account' (Kontonummer).
 module Types.Position
   ( Position (..),
     expectedPositionHeaders,
@@ -24,7 +23,8 @@ import Types.UtilTypes
   )
 
 data Position = Position
-  { name :: !Text, -- Namn
+  { account :: !Text, -- Kontonummer
+    name :: !Text, -- Namn
     shortName :: !Text, -- Kortnamn
     volume :: !Double, -- Volym (fractional for funds)
     marketValue :: !Money, -- Marknadsvärde
@@ -42,7 +42,8 @@ expectedPositionHeaders :: [BSU.ByteString]
 expectedPositionHeaders =
   map
     BSU.fromString
-    [ "Namn",
+    [ "Kontonummer",
+      "Namn",
       "Kortnamn",
       "Volym",
       "Marknadsvärde",
@@ -57,6 +58,7 @@ expectedPositionHeaders =
 
 instance FromNamedRecord Position where
   parseNamedRecord r = do
+    account <- r .: "Kontonummer"
     name <- r .: "Namn"
     shortName <- r .: "Kortnamn"
     volumeRaw <- r .: "Volym"

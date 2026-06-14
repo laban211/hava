@@ -42,10 +42,11 @@ createPositionsTable uiSize termWidth positions =
       spacing = map width header
    in createPrettyTable uiSize termWidth header content spacing
 
--- | Namn | Antal | GAV (kr) | Värde (kr) | Ansk. (kr) | Vinst (kr) | Avkastn. % |
+-- | Konto | Namn | Antal | GAV (kr) | Värde (kr) | Ansk. (kr) | Vinst (kr) | Avkastn. % |
 positionsHeader :: [PrintableCell]
 positionsHeader =
-  [ createFilledCell "Namn" LeftAlign,
+  [ createFixedCell "Konto" FixedWidth {s = 12, l = Just 14} LeftAlign,
+    createFilledCell "Namn" LeftAlign,
     createFixedCell "Antal" FixedWidth {s = 8, l = Just 10} RightAlign,
     createFixedCell "GAV (kr)" FixedWidth {s = 10, l = Just 12} RightAlign,
     createFixedCell "Värde (kr)" FixedWidth {s = 10, l = Just 13} RightAlign,
@@ -56,8 +57,10 @@ positionsHeader =
 
 positionRowToCells :: [PrintableCell] -> Position -> [PrintableCell]
 positionRowToCells header p =
-  rowToCells header $
-    [ name p,
+  rowToCells
+    header
+    [ account p,
+      name p,
       doubleToText (volume p),
       moneyToText (gavSek p),
       moneyToText (marketValue p),
@@ -77,8 +80,10 @@ totalsRow header positions =
         if unMoney totalCost == 0
           then Nothing
           else Just (unMoney totalProfit / unMoney totalCost * 100)
-   in rowToCells header $
+   in rowToCells
+        header
         [ T.pack "Totalt",
+          T.empty,
           T.empty,
           T.empty,
           moneyToText totalValue,

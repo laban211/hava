@@ -91,15 +91,16 @@ testParseBuy = do
 
 testParsePosition :: Spec
 testParsePosition = do
-  it "parses a consolidated-holdings row with Swedish decimal commas" $ do
+  it "parses a per-account holdings row with Swedish decimal commas" $ do
     let csv =
           stringsToCsvByteString
             [ positionHeader,
-              "Acme Corp;ACME;10;1234,50;100,00;100,00;SEK;SE;SE0000000001;XSTO;STOCK"
+              "0000-0000000;Acme Corp;ACME;10;1234,50;100,00;100,00;SEK;SE;SE0000000001;XSTO;STOCK"
             ]
     let expected =
           [ Position
-              { name = T.pack "Acme Corp",
+              { account = T.pack "0000-0000000",
+                name = T.pack "Acme Corp",
                 shortName = T.pack "ACME",
                 volume = 10,
                 marketValue = Money 1234.50,
@@ -116,17 +117,17 @@ testParsePosition = do
 
   it "fails with a friendly message if a required header is missing" $ do
     let badHeader =
-          "Namn-with-extra-chars;Kortnamn;Volym;Marknadsvärde;GAV (SEK);GAV;Valuta;Land;ISIN;Marknad;Typ"
+          "Kontonummer-with-extra-chars;Namn;Kortnamn;Volym;Marknadsvärde;GAV (SEK);GAV;Valuta;Land;ISIN;Marknad;Typ"
     let csv = stringsToCsvByteString [badHeader]
 
     evaluate (P.parsePositionCsvData csv)
       `shouldThrowErrorContaining` "Unexpected CSV header."
 
     evaluate (P.parsePositionCsvData csv)
-      `shouldThrowErrorContaining` "Missing: Namn"
+      `shouldThrowErrorContaining` "Missing: Kontonummer"
 
 positionHeader :: String
-positionHeader = "Namn;Kortnamn;Volym;Marknadsvärde;GAV (SEK);GAV;Valuta;Land;ISIN;Marknad;Typ"
+positionHeader = "Kontonummer;Namn;Kortnamn;Volym;Marknadsvärde;GAV (SEK);GAV;Valuta;Land;ISIN;Marknad;Typ"
 
 csvHeader :: String
 csvHeader = "Datum;Konto;Typ av transaktion;Värdepapper/beskrivning;Antal;Kurs;Belopp;Courtage;Valuta;ISIN"
